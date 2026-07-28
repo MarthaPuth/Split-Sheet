@@ -1,0 +1,764 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Split Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0D14; --surf:#141926; --surf2:#1D2433; --line:#262E40;
+  --tx:#EDF0F6; --mut:#8A93A8; --dim:#5D677D;
+  --sleep:#6FD3E0; --run:#F5A05A; --ready:#A98BFA; --gym:#6EE7A0; --warn:#F2707E;
+  --f:'Inter',system-ui,-apple-system,sans-serif; --m:'DM Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--f);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:84px}
+.mono{font-family:var(--m);font-variant-numeric:tabular-nums}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+.wrap{max-width:940px;margin:0 auto;padding:0 16px}
+
+/* top */
+.hd{padding:22px 0 16px}
+.hd .d{font-size:12.5px;color:var(--mut);letter-spacing:.03em}
+.hd h1{font-size:25px;margin-top:3px}
+.hd .cd{font-family:var(--m);font-size:12px;color:var(--dim);margin-top:5px}
+.hd .cd b{color:var(--run);font-weight:500}
+
+/* nav */
+nav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,13,20,.93);backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);display:flex;z-index:20;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;color:var(--dim);padding:11px 4px 13px;cursor:pointer;font-family:var(--f);font-size:10.5px;font-weight:500;letter-spacing:.04em}
+nav button .ic{display:block;font-size:17px;line-height:1;margin-bottom:5px}
+nav button[aria-selected=true]{color:var(--tx)}
+nav button[aria-selected=true].t-sleep{color:var(--sleep)}
+nav button[aria-selected=true].t-runs{color:var(--run)}
+nav button[aria-selected=true].t-today{color:var(--ready)}
+nav button[aria-selected=true].t-gym{color:var(--gym)}
+nav button:focus-visible{outline:2px solid var(--tx);outline-offset:-3px}
+@media(min-width:720px){
+  body{padding-bottom:24px;padding-top:0}
+  nav{position:sticky;top:0;bottom:auto;border-top:0;border-bottom:1px solid var(--line);max-width:940px;margin:0 auto;padding:0 16px}
+  nav button{flex:0 0 auto;padding:16px 20px 14px;font-size:13px;border-bottom:2px solid transparent}
+  nav button .ic{display:none}
+  nav button[aria-selected=true]{border-color:currentColor}
+}
+
+/* cards */
+.card{background:var(--surf);border-radius:16px;padding:20px;margin-bottom:12px}
+.card>h2{font-size:13px;color:var(--mut);font-weight:500;letter-spacing:.05em;text-transform:uppercase;margin-bottom:14px}
+.row{display:grid;gap:12px}
+.r2{grid-template-columns:1fr 1fr}
+.r3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:560px){.r3{grid-template-columns:1fr 1fr}}
+
+/* ring */
+.ringbox{display:flex;align-items:center;gap:22px}
+.ringbox .meta{min-width:0}
+.ringbox .big{font-size:30px;font-weight:700;letter-spacing:-.02em}
+.ringbox .lab{font-size:13px;color:var(--mut);margin-top:2px}
+.ringbox .note{font-size:13px;color:var(--dim);margin-top:9px;line-height:1.45}
+.ring{flex:0 0 auto;position:relative}
+.ring .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .val .n{font-family:var(--m);font-size:26px;font-weight:500;line-height:1}
+.ring .val .s{font-size:9.5px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+
+/* stat */
+.stat{background:var(--surf2);border-radius:12px;padding:14px}
+.stat .k{font-size:11px;color:var(--mut);letter-spacing:.04em}
+.stat .v{font-family:var(--m);font-size:22px;margin-top:6px;line-height:1.1}
+.stat .u{font-size:11px;color:var(--dim);margin-left:3px}
+.stat .sub{font-size:11.5px;color:var(--dim);margin-top:4px}
+
+/* contributor bars */
+.cb{margin-bottom:13px}
+.cb:last-child{margin-bottom:0}
+.cb .t{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.cb .t span:last-child{font-family:var(--m);color:var(--mut)}
+.cb .bar{height:5px;border-radius:3px;background:var(--surf2);overflow:hidden}
+.cb .bar i{display:block;height:100%;border-radius:3px}
+
+/* stage bar */
+.stages{display:flex;height:30px;border-radius:8px;overflow:hidden;margin:4px 0 12px}
+.stages div{display:flex;align-items:center;justify-content:center;font-family:var(--m);font-size:10px;color:#0A0D14;font-weight:500}
+.slegend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--mut)}
+.slegend i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:6px}
+
+/* list */
+.li{display:flex;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0;padding-bottom:0}
+.li:first-child{padding-top:0}
+.li .dt{flex:0 0 44px;text-align:center}
+.li .dt .dd{font-family:var(--m);font-size:17px;line-height:1}
+.li .dt .mo{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.li .mid{flex:1;min-width:0}
+.li .mid .n{font-size:14.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .mid .s{font-size:12px;color:var(--dim);margin-top:3px;font-family:var(--m)}
+.li .rt{text-align:right;font-family:var(--m);flex:0 0 auto}
+.li .rt .a{font-size:15px}
+.li .rt .b{font-size:11px;color:var(--dim);margin-top:3px}
+.pill{display:inline-block;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:20px;font-family:var(--f);font-weight:600;vertical-align:1px;margin-left:7px}
+
+/* session */
+.sess{background:var(--surf2);border-radius:12px;padding:16px;margin-bottom:10px;border-left:3px solid var(--run)}
+.sess.strength{border-left-color:var(--gym)}
+.sess.rest{border-left-color:var(--dim)}
+.sess .tag{font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--mut)}
+.sess .nm{font-size:18px;font-weight:600;margin:5px 0 3px}
+.sess .dt2{font-size:13px;color:var(--mut)}
+.sess .vol{float:right;font-family:var(--m);font-size:13px;color:var(--run)}
+
+/* timeline */
+.tl{position:relative;padding-left:20px}
+.tl:before{content:'';position:absolute;left:4px;top:6px;bottom:6px;width:1px;background:var(--line)}
+.tli{position:relative;padding:0 0 18px}
+.tli:last-child{padding-bottom:0}
+.tli:before{content:'';position:absolute;left:-20px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--surf2);border:1px solid var(--line)}
+.tli.key:before{background:var(--ready);border-color:var(--ready)}
+.tli .tm{font-family:var(--m);font-size:11.5px;color:var(--ready);letter-spacing:.03em}
+.tli .tx{font-size:13.5px;color:var(--mut);margin-top:3px;line-height:1.45}
+.tli.key .tx{color:var(--tx)}
+
+/* chart */
+svg.ch{width:100%;height:auto;display:block}
+.chl{display:flex;gap:15px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:11px;font-family:var(--m)}
+.chl i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:5px}
+
+/* misc */
+.note{font-size:13px;color:var(--mut);line-height:1.55}
+.note b{color:var(--tx);font-weight:600}
+.hide{display:none}
+.seg{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.seg button{background:var(--surf2);border:0;color:var(--mut);font-family:var(--f);font-size:12px;padding:7px 13px;border-radius:20px;cursor:pointer}
+.seg button[aria-selected=true]{background:var(--tx);color:var(--bg);font-weight:600}
+.bar-mini{height:4px;border-radius:2px;background:var(--surf2);overflow:hidden;margin-top:8px}
+.bar-mini i{display:block;height:100%;border-radius:2px}
+.hd{position:relative}
+.upd{position:absolute;top:22px;right:0;background:var(--surf2);border:0;color:var(--tx);
+  font-family:var(--f);font-size:12px;font-weight:500;padding:9px 15px;border-radius:20px;cursor:pointer}
+.upd:active{opacity:.7}
+.dz{border:1.5px dashed var(--line);border-radius:14px;padding:26px 18px;text-align:center;background:var(--surf2);transition:border-color .15s}
+.dz.over{border-color:var(--sleep)}
+.dz .big2{font-size:15px;font-weight:600;margin-bottom:5px}
+.dz .sm{font-size:12.5px;color:var(--mut)}
+.dz input{position:absolute;width:1px;height:1px;opacity:0}
+.dz label{color:var(--sleep);text-decoration:underline;cursor:pointer}
+.steps{counter-reset:s;margin:0;padding:0;list-style:none}
+.steps li{counter-increment:s;position:relative;padding:0 0 15px 32px;font-size:13.5px;color:var(--mut);line-height:1.5}
+.steps li:last-child{padding-bottom:0}
+.steps li:before{content:counter(s);position:absolute;left:0;top:0;width:21px;height:21px;border-radius:50%;
+  background:var(--surf2);color:var(--tx);font-family:var(--m);font-size:11px;display:flex;align-items:center;justify-content:center}
+.steps li b{color:var(--tx);font-weight:600}
+.log{font-family:var(--m);font-size:12px;color:var(--mut);margin-top:14px;line-height:1.7}
+.log .ok{color:var(--gym)} .log .no{color:var(--warn)}
+.savebtn{background:var(--tx);color:var(--bg);border:0;font-family:var(--f);font-size:13px;font-weight:600;
+  padding:12px 20px;border-radius:22px;cursor:pointer;margin-top:16px;width:100%}
+.savebtn[disabled]{opacity:.35;cursor:default}
+.sync{font-family:var(--m);font-size:11px;color:var(--dim);text-align:center;padding:18px 0 4px}
+.sync button{background:none;border:1px solid var(--line);color:var(--mut);font-family:var(--m);font-size:11px;padding:6px 13px;border-radius:20px;cursor:pointer;margin-left:8px}
+</style>
+
+<script type="application/json" id="snap">{"daily": [{"day": "2026-05-11", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 73.0, "readiness": 87.0, "activity_score": 99.0, "tst": 7.63, "deep": 1.53, "rem": 1.73, "awake": 2.07, "tib": 9.7, "eff": 79.0, "lat": 42, "hrv": 94.0, "rhr": 39.0, "bed": 21.4833333333, "wake": 7.1833333333, "temp_dev": 0.22, "steps": 16405.0, "atl": 0.0, "ctl": 0.0, "acwr": null, "light": 4.37, "restless": 270, "br": 16.4}, {"day": "2026-05-12", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 89.0, "readiness": 90.0, "activity_score": 99.0, "tst": 8.2, "deep": 1.88, "rem": 2.37, "awake": 1.12, "tib": 9.32, "eff": 88.0, "lat": 7, "hrv": 98.0, "rhr": 37.0, "bed": 22.2833333333, "wake": 7.6, "temp_dev": 0.19, "steps": 14968.0, "atl": 0.0, "ctl": 0.0, "acwr": null, "light": 3.96, "restless": 228, "br": 16.1}, {"day": "2026-05-13", "km": 4.8, "mi": 3.0, "min": 22.0, "runs": 1.0, "hr": 116.0, "elev": 180.0, "loc": "Peoria", "sleep_score": 77.0, "readiness": 86.0, "activity_score": 95.0, "tst": 7.65, "deep": 1.14, "rem": 1.42, "awake": 1.56, "tib": 9.21, "eff": 83.0, "lat": 12, "hrv": 91.0, "rhr": 40.0, "bed": 22.1, "wake": 7.3166666667, "temp_dev": 0.19, "steps": 17192.0, "atl": 1.6, "ctl": 1.6, "acwr": 1.0, "light": 5.09, "restless": 184, "br": 16.4}, {"day": "2026-05-14", "km": 14.3, "mi": 8.9, "min": 68.0, "runs": 4.0, "hr": 126.0, "elev": 178.5, "loc": "Peoria", "sleep_score": 80.0, "readiness": 81.0, "activity_score": 96.0, "tst": 7.55, "deep": 1.54, "rem": 1.56, "awake": 1.75, "tib": 9.3, "eff": 81.0, "lat": 15, "hrv": 89.0, "rhr": 40.0, "bed": 22.4666666667, "wake": 7.7666666667, "temp_dev": -0.04, "steps": 11939.0, "atl": 4.775, "ctl": 4.775, "acwr": 1.0, "light": 4.45, "restless": 239, "br": 16.5}, {"day": "2026-05-15", "km": 11.3, "mi": 7.0, "min": 50.0, "runs": 1.0, "hr": 125.0, "elev": 142.0, "loc": "Terre Haute", "sleep_score": 79.0, "readiness": 88.0, "activity_score": 98.0, "tst": 7.92, "deep": 1.57, "rem": 1.77, "awake": 1.37, "tib": 9.3, "eff": 85.0, "lat": 4, "hrv": 93.0, "rhr": 37.0, "bed": 22.2, "wake": 7.5, "temp_dev": 0.1, "steps": 15841.0, "atl": 6.08, "ctl": 6.08, "acwr": 1.0, "light": 4.59, "restless": 222, "br": 16.2}, {"day": "2026-05-16", "km": 5.5, "mi": 3.4, "min": 30.0, "runs": 2.0, "hr": 119.0, "elev": 144.5, "loc": "Terre Haute", "sleep_score": 84.0, "readiness": 91.0, "activity_score": 100.0, "tst": 8.15, "deep": 1.51, "rem": 1.9, "awake": 0.87, "tib": 9.02, "eff": 90.0, "lat": 4, "hrv": 95.0, "rhr": 37.0, "bed": 22.5333333333, "wake": 7.55, "temp_dev": 0.04, "steps": 8288.0, "atl": 5.9833333333, "ctl": 5.9833333333, "acwr": 1.0, "light": 4.74, "restless": 266, "br": 15.9}, {"day": "2026-05-17", "km": 6.4, "mi": 4.0, "min": 31.0, "runs": 3.0, "hr": 143.0, "elev": 148.0, "loc": "Terre Haute", "sleep_score": 85.0, "readiness": 81.0, "activity_score": 97.0, "tst": 8.12, "deep": 1.48, "rem": 1.66, "awake": 1.19, "tib": 9.31, "eff": 87.0, "lat": 18, "hrv": 97.0, "rhr": 38.0, "bed": 22.4833333333, "wake": 7.8, "temp_dev": 0.58, "steps": 16340.0, "atl": 6.0428571429, "ctl": 6.0428571429, "acwr": 1.0, "light": 4.97, "restless": 209, "br": 16.0}, {"day": "2026-05-18", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 57.0, "readiness": 72.0, "activity_score": 99.0, "tst": 5.18, "deep": 1.38, "rem": 0.95, "awake": 1.01, "tib": 6.2, "eff": 84.0, "lat": 4, "hrv": 94.0, "rhr": 39.0, "bed": 1.0, "wake": 7.2, "temp_dev": 0.39, "steps": 9394.0, "atl": 6.0428571429, "ctl": 5.2875, "acwr": 1.14, "light": 2.86, "restless": 111, "br": 17.1}, {"day": "2026-05-19", "km": 19.6, "mi": 12.2, "min": 92.0, "runs": 2.0, "hr": 123.0, "elev": 158.5, "loc": "Peoria", "sleep_score": 83.0, "readiness": 93.0, "activity_score": 99.0, "tst": 7.99, "deep": 1.7, "rem": 2.26, "awake": 2.13, "tib": 10.12, "eff": 79.0, "lat": 22, "hrv": 78.0, "rhr": 38.0, "bed": 22.3, "wake": 8.4166666667, "temp_dev": -0.32, "steps": 41.0, "atl": 8.8428571429, "ctl": 6.8777777778, "acwr": 1.29, "light": 4.03, "restless": 238, "br": 15.8}, {"day": "2026-05-20", "km": 16.0, "mi": 9.9, "min": 64.0, "runs": 3.0, "hr": 137.0, "elev": 208.0, "loc": "Peoria", "sleep_score": 77.0, "readiness": 84.0, "activity_score": 99.0, "tst": 7.24, "deep": 1.3, "rem": 1.78, "awake": 1.41, "tib": 8.65, "eff": 84.0, "lat": 25, "hrv": 91.0, "rhr": 40.0, "bed": 22.6666666667, "wake": 7.3333333333, "temp_dev": -0.34, "steps": 14565.0, "atl": 10.4428571429, "ctl": 7.79, "acwr": 1.34, "light": 4.16, "restless": 184, "br": 16.1}, {"day": "2026-05-21", "km": 19.6, "mi": 12.2, "min": 91.0, "runs": 2.0, "hr": 122.0, "elev": 159.5, "loc": "Peoria", "sleep_score": 77.0, "readiness": 85.0, "activity_score": 97.0, "tst": 7.62, "deep": 1.31, "rem": 1.42, "awake": 1.84, "tib": 9.45, "eff": 81.0, "lat": 3, "hrv": 85.0, "rhr": 38.0, "bed": 22.8, "wake": 8.2666666667, "temp_dev": -0.01, "steps": 11697.0, "atl": 11.2, "ctl": 8.8636363636, "acwr": 1.26, "light": 4.88, "restless": 228, "br": 15.9}, {"day": "2026-05-22", "km": 12.3, "mi": 7.6, "min": 61.0, "runs": 1.0, "hr": 117.0, "elev": 148.0, "loc": "Peoria", "sleep_score": 82.0, "readiness": 88.0, "activity_score": 97.0, "tst": 7.58, "deep": 1.61, "rem": 1.52, "awake": 1.32, "tib": 8.9, "eff": 85.0, "lat": 12, "hrv": 84.0, "rhr": 38.0, "bed": 22.8333333333, "wake": 7.7333333333, "temp_dev": -0.31, "steps": 11874.0, "atl": 11.3428571429, "ctl": 9.15, "acwr": 1.24, "light": 4.44, "restless": 234, "br": 15.8}, {"day": "2026-05-23", "km": 9.4, "mi": 5.8, "min": 46.0, "runs": 3.0, "hr": 126.0, "elev": 179.0, "loc": "Peoria", "sleep_score": 84.0, "readiness": 88.0, "activity_score": 95.0, "tst": 8.2, "deep": 1.49, "rem": 2.12, "awake": 1.51, "tib": 9.71, "eff": 84.0, "lat": 10, "hrv": 81.0, "rhr": 38.0, "bed": 22.5666666667, "wake": 8.2833333333, "temp_dev": -0.06, "steps": 13377.0, "atl": 11.9, "ctl": 9.1692307692, "acwr": 1.3, "light": 4.58, "restless": 207, "br": 15.6}, {"day": "2026-05-24", "km": 14.9, "mi": 9.3, "min": 69.0, "runs": 2.0, "hr": 120.0, "elev": 182.5, "loc": "Peoria", "sleep_score": 76.0, "readiness": 86.0, "activity_score": 99.0, "tst": 7.45, "deep": 1.42, "rem": 1.68, "awake": 1.23, "tib": 8.68, "eff": 86.0, "lat": 22, "hrv": 92.0, "rhr": 38.0, "bed": 22.4833333333, "wake": 7.1666666667, "temp_dev": 0.28, "steps": 9643.0, "atl": 13.1142857143, "ctl": 9.5785714286, "acwr": 1.37, "light": 4.36, "restless": 181, "br": 16.2}, {"day": "2026-05-25", "km": 9.7, "mi": 6.0, "min": 44.0, "runs": 1.0, "hr": 124.0, "elev": 142.0, "loc": "Peoria", "sleep_score": 84.0, "readiness": 88.0, "activity_score": 95.0, "tst": 7.96, "deep": 1.62, "rem": 1.87, "awake": 1.12, "tib": 9.08, "eff": 88.0, "lat": 24, "hrv": 91.0, "rhr": 37.0, "bed": 22.4166666667, "wake": 7.5, "temp_dev": -0.03, "steps": 17099.0, "atl": 14.5, "ctl": 9.5866666667, "acwr": 1.51, "light": 4.47, "restless": 226, "br": 15.8}, {"day": "2026-05-26", "km": 4.7, "mi": 2.9, "min": 22.0, "runs": 1.0, "hr": 133.0, "elev": 382.0, "loc": "Fayetteville", "sleep_score": 62.0, "readiness": 71.0, "activity_score": 99.0, "tst": 5.68, "deep": 1.77, "rem": 1.22, "awake": 1.5, "tib": 7.18, "eff": 79.0, "lat": 12, "hrv": 83.0, "rhr": 38.0, "bed": 2.2666666667, "wake": 9.45, "temp_dev": 0.13, "steps": 13415.0, "atl": 12.3714285714, "ctl": 9.28125, "acwr": 1.33, "light": 2.7, "restless": 144, "br": 16.1}, {"day": "2026-05-27", "km": 5.4, "mi": 3.4, "min": 26.0, "runs": 2.0, "hr": 131.0, "elev": 392.0, "loc": "Fayetteville", "sleep_score": 83.0, "readiness": 92.0, "activity_score": 100.0, "tst": 8.62, "deep": 1.62, "rem": 1.92, "awake": 1.79, "tib": 10.41, "eff": 83.0, "lat": 32, "hrv": 88.0, "rhr": 39.0, "bed": 22.7166666667, "wake": 9.1333333333, "temp_dev": 0.1, "steps": 582.0, "atl": 10.8571428571, "ctl": 9.0529411765, "acwr": 1.2, "light": 5.09, "restless": 294, "br": 16.6}, {"day": "2026-05-28", "km": 4.9, "mi": 3.0, "min": 22.0, "runs": 1.0, "hr": 129.0, "elev": 376.0, "loc": "Springdale", "sleep_score": null, "readiness": null, "activity_score": 99.0, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": 1458.0, "atl": 8.7571428571, "ctl": 8.8222222222, "acwr": 0.99}, {"day": "2026-05-29", "km": 2.3, "mi": 1.4, "min": 10.0, "runs": 1.0, "hr": 134.0, "elev": 386.0, "loc": "Springdale", "sleep_score": 77.0, "readiness": 85.0, "activity_score": 94.0, "tst": 8.77, "deep": 1.94, "rem": 2.12, "awake": 1.98, "tib": 10.74, "eff": 82.0, "lat": 35, "hrv": 80.0, "rhr": 40.0, "bed": 22.8833333333, "wake": 9.6333333333, "temp_dev": 0.06, "steps": 2883.0, "atl": 7.3285714286, "ctl": 8.4789473684, "acwr": 0.86, "light": 4.71, "restless": 286, "br": 16.2}, {"day": "2026-05-30", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 60.0, "readiness": 68.0, "activity_score": 89.0, "tst": 5.81, "deep": 1.03, "rem": 1.42, "awake": 1.01, "tib": 6.82, "eff": 85.0, "lat": 16, "hrv": 89.0, "rhr": 42.0, "bed": 2.8, "wake": 9.6166666667, "temp_dev": 0.29, "steps": 3654.0, "atl": 5.9857142857, "ctl": 8.055, "acwr": 0.74, "light": 3.35, "restless": 244, "br": 17.0}, {"day": "2026-05-31", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 79.0, "readiness": 80.0, "activity_score": 80.0, "tst": 8.87, "deep": 1.66, "rem": 2.04, "awake": 1.62, "tib": 10.49, "eff": 85.0, "lat": 46, "hrv": 73.0, "rhr": 43.0, "bed": 23.1166666667, "wake": 9.6166666667, "temp_dev": 0.33, "steps": 9134.0, "atl": 3.8571428571, "ctl": 7.6714285714, "acwr": 0.5, "light": 5.17, "restless": 232, "br": 17.1}, {"day": "2026-06-01", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 62.0, "readiness": 78.0, "activity_score": 75.0, "tst": 6.57, "deep": 1.42, "rem": 1.68, "awake": 1.83, "tib": 8.4, "eff": 78.0, "lat": 40, "hrv": 87.0, "rhr": 39.0, "bed": 0.35, "wake": 8.75, "temp_dev": -0.09, "steps": 5569.0, "atl": 2.4714285714, "ctl": 7.3227272727, "acwr": 0.34, "light": 3.46, "restless": 240, "br": 16.4}, {"day": "2026-06-02", "km": 9.8, "mi": 6.1, "min": 46.0, "runs": 1.0, "hr": 142.0, "elev": 175.0, "loc": "Peoria", "sleep_score": 81.0, "readiness": 80.0, "activity_score": 70.0, "tst": 7.77, "deep": 1.44, "rem": 1.81, "awake": 0.79, "tib": 8.56, "eff": 91.0, "lat": 4, "hrv": 92.0, "rhr": 38.0, "bed": 23.55, "wake": 8.1, "temp_dev": -1.27, "steps": 4150.0, "atl": 3.2, "ctl": 7.4304347826, "acwr": 0.43, "light": 4.52, "restless": 202, "br": 16.8}, {"day": "2026-06-03", "km": 10.5, "mi": 6.5, "min": 50.0, "runs": 1.0, "hr": 143.0, "elev": 139.0, "loc": "Peoria", "sleep_score": 84.0, "readiness": 88.0, "activity_score": 80.0, "tst": 8.5, "deep": 1.34, "rem": 2.02, "awake": 1.98, "tib": 10.48, "eff": 81.0, "lat": 16, "hrv": 86.0, "rhr": 40.0, "bed": 22.3333333333, "wake": 8.8166666667, "temp_dev": -0.08, "steps": 10300.0, "atl": 3.9285714286, "ctl": 7.5583333333, "acwr": 0.52, "light": 5.14, "restless": 302, "br": 16.2}, {"day": "2026-06-04", "km": 6.4, "mi": 4.0, "min": 35.0, "runs": 1.0, "hr": 123.0, "elev": 179.0, "loc": "Peoria", "sleep_score": 71.0, "readiness": 77.0, "activity_score": 85.0, "tst": 7.64, "deep": 1.3, "rem": 1.5, "awake": 2.12, "tib": 9.76, "eff": 78.0, "lat": 32, "hrv": 66.0, "rhr": 42.0, "bed": 22.2666666667, "wake": 8.0333333333, "temp_dev": 0.2, "steps": 8467.0, "atl": 4.1428571429, "ctl": 7.512, "acwr": 0.55, "light": 4.84, "restless": 229, "br": 16.6}, {"day": "2026-06-05", "km": 4.9, "mi": 3.0, "min": 22.0, "runs": 1.0, "hr": 137.0, "elev": 181.0, "loc": "Peoria", "sleep_score": 71.0, "readiness": 83.0, "activity_score": 90.0, "tst": 7.8, "deep": 1.62, "rem": 1.6, "awake": 2.78, "tib": 10.58, "eff": 74.0, "lat": 62, "hrv": 83.0, "rhr": 40.0, "bed": 22.0, "wake": 8.5833333333, "temp_dev": 0.15, "steps": 10198.0, "atl": 4.5142857143, "ctl": 7.4115384615, "acwr": 0.61, "light": 4.58, "restless": 238, "br": 16.5}, {"day": "2026-06-06", "km": 16.8, "mi": 10.4, "min": 57.0, "runs": 2.0, "hr": 154.0, "elev": 138.5, "loc": "Peoria", "sleep_score": 77.0, "readiness": 79.0, "activity_score": 90.0, "tst": 7.41, "deep": 1.53, "rem": 1.68, "awake": 1.23, "tib": 8.63, "eff": 86.0, "lat": 4, "hrv": 81.0, "rhr": 43.0, "bed": 21.45, "wake": 6.0833333333, "temp_dev": -0.04, "steps": 4264.0, "atl": 6.9142857143, "ctl": 7.7592592593, "acwr": 0.89, "light": 4.2, "restless": 236, "br": 17.0}, {"day": "2026-06-07", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": 86.0, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": 533.0, "atl": 6.9142857143, "ctl": 7.4821428571, "acwr": 0.92}, {"day": "2026-06-08", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 80.0, "readiness": 85.0, "activity_score": 85.0, "tst": 8.2, "deep": 1.32, "rem": 2.42, "awake": 1.48, "tib": 9.68, "eff": 85.0, "lat": 52, "hrv": 84.0, "rhr": 40.0, "bed": 21.7, "wake": 7.3833333333, "temp_dev": 0.18, "steps": 1845.0, "atl": 6.9142857143, "ctl": 7.4821428571, "acwr": 0.92, "light": 4.46, "restless": 230, "br": 16.8}, {"day": "2026-06-09", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 77.0, "readiness": 88.0, "activity_score": 89.0, "tst": 7.46, "deep": 1.38, "rem": 1.82, "awake": 2.38, "tib": 9.84, "eff": 76.0, "lat": 20, "hrv": 92.0, "rhr": 39.0, "bed": 21.75, "wake": 7.6, "temp_dev": -0.25, "steps": 1225.0, "atl": 5.5142857143, "ctl": 7.4821428571, "acwr": 0.74, "light": 4.26, "restless": 208, "br": 16.4}, {"day": "2026-06-10", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 80.0, "readiness": 81.0, "activity_score": 78.0, "tst": 7.84, "deep": 1.85, "rem": 1.82, "awake": 1.97, "tib": 9.81, "eff": 80.0, "lat": 14, "hrv": 94.0, "rhr": 38.0, "bed": 23.4333333333, "wake": 9.25, "temp_dev": 0.37, "steps": 1116.0, "atl": 4.0142857143, "ctl": 7.3107142857, "acwr": 0.55, "light": 4.17, "restless": 196, "br": 16.1}, {"day": "2026-06-11", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 80.0, "readiness": 79.0, "activity_score": 70.0, "tst": 6.96, "deep": 1.89, "rem": 1.87, "awake": 0.86, "tib": 7.82, "eff": 89.0, "lat": 8, "hrv": 85.0, "rhr": 40.0, "bed": 0.2833333333, "wake": 8.1, "temp_dev": 0.43, "steps": 8927.0, "atl": 3.1, "ctl": 6.8, "acwr": 0.46, "light": 3.2, "restless": 170, "br": 16.8}, {"day": "2026-06-12", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 67.0, "readiness": 83.0, "activity_score": 60.0, "tst": 6.22, "deep": 1.42, "rem": 1.42, "awake": 1.27, "tib": 7.48, "eff": 83.0, "lat": 42, "hrv": 92.0, "rhr": 38.0, "bed": 22.6833333333, "wake": 6.1666666667, "temp_dev": -0.66, "steps": 347.0, "atl": 2.4, "ctl": 6.3964285714, "acwr": 0.38, "light": 3.38, "restless": 179, "br": 16.4}, {"day": "2026-06-13", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": 55.0, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": 1171.0, "atl": 0.0, "ctl": 6.2, "acwr": 0.0}, {"day": "2026-06-14", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": 54.0, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": 227.0, "atl": 0.0, "ctl": 5.9714285714, "acwr": 0.0}, {"day": "2026-06-15", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 64.0, "readiness": 49.0, "activity_score": 65.0, "tst": 4.93, "deep": 1.15, "rem": 1.24, "awake": 1.01, "tib": 5.94, "eff": 83.0, "lat": 18, "hrv": 70.0, "rhr": 47.0, "bed": 0.2666666667, "wake": 6.2, "temp_dev": 0.52, "steps": 6263.0, "atl": 0.0, "ctl": 5.9714285714, "acwr": 0.0, "light": 2.54, "restless": 136, "br": 18.1}, {"day": "2026-06-16", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 43.0, "readiness": 58.0, "activity_score": 72.0, "tst": 3.7, "deep": 0.93, "rem": 0.52, "awake": 1.93, "tib": 5.63, "eff": 66.0, "lat": 3, "hrv": 84.0, "rhr": 43.0, "bed": 0.3333333333, "wake": 5.95, "temp_dev": -0.18, "steps": 7257.0, "atl": 0.0, "ctl": 5.2714285714, "acwr": 0.0, "light": 2.24, "restless": 59, "br": 16.2}, {"day": "2026-06-17", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 71.0, "readiness": 72.0, "activity_score": 71.0, "tst": 4.51, "deep": 1.06, "rem": 1.12, "awake": 0.55, "tib": 5.06, "eff": 89.0, "lat": 18, "hrv": 76.0, "rhr": 43.0, "bed": 5.3166666667, "wake": 10.3666666667, "temp_dev": -0.02, "steps": 5066.0, "atl": 0.0, "ctl": 4.7, "acwr": 0.0, "light": 2.33, "restless": 117, "br": 17.2}, {"day": "2026-06-18", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 71.0, "readiness": 67.0, "activity_score": 73.0, "tst": 7.96, "deep": 1.16, "rem": 1.67, "awake": 2.73, "tib": 10.69, "eff": 74.0, "lat": 29, "hrv": 88.0, "rhr": 40.0, "bed": 22.95, "wake": 9.6333333333, "temp_dev": 0.59, "steps": 407.0, "atl": 0.0, "ctl": 4.0, "acwr": 0.0, "light": 5.13, "restless": 236, "br": 17.2}, {"day": "2026-06-19", "km": 8.2, "mi": 5.1, "min": 38.0, "runs": 1.0, "hr": 138.0, "elev": 1572.0, "loc": "Alberton", "sleep_score": null, "readiness": null, "activity_score": 85.0, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": 9587.0, "atl": 1.1714285714, "ctl": 3.8535714286, "acwr": 0.3}, {"day": "2026-06-20", "km": 13.0, "mi": 8.1, "min": 61.0, "runs": 1.0, "hr": 149.0, "elev": 1565.0, "loc": "Alberton", "sleep_score": 64.0, "readiness": 68.0, "activity_score": 93.0, "tst": 7.07, "deep": 1.22, "rem": 1.35, "awake": 2.01, "tib": 9.07, "eff": 78.0, "lat": 40, "hrv": 87.0, "rhr": 41.0, "bed": 23.5, "wake": 8.5666666667, "temp_dev": 0.15, "steps": 16912.0, "atl": 3.0285714286, "ctl": 3.9821428571, "acwr": 0.76, "light": 4.5, "restless": 198, "br": 17.1}, {"day": "2026-06-21", "km": 8.2, "mi": 5.1, "min": 38.0, "runs": 1.0, "hr": 142.0, "elev": 1586.0, "loc": "Alberton", "sleep_score": 88.0, "readiness": 73.0, "activity_score": 95.0, "tst": 8.82, "deep": 1.39, "rem": 1.78, "awake": 1.25, "tib": 10.07, "eff": 88.0, "lat": 18, "hrv": 65.0, "rhr": 42.0, "bed": 21.9333333333, "wake": 8.0, "temp_dev": 0.28, "steps": 9604.0, "atl": 4.2, "ctl": 3.7428571429, "acwr": 1.12, "light": 5.64, "restless": 244, "br": 17.6}, {"day": "2026-06-22", "km": 13.0, "mi": 8.1, "min": 60.0, "runs": 1.0, "hr": 157.0, "elev": 1572.0, "loc": "Alberton", "sleep_score": 72.0, "readiness": 73.0, "activity_score": 94.0, "tst": 7.56, "deep": 1.47, "rem": 1.82, "awake": 2.29, "tib": 9.84, "eff": 77.0, "lat": 56, "hrv": 84.0, "rhr": 42.0, "bed": 22.2666666667, "wake": 8.1, "temp_dev": 0.37, "steps": 13750.0, "atl": 6.0571428571, "ctl": 3.8607142857, "acwr": 1.57, "light": 4.28, "restless": 229, "br": 17.1}, {"day": "2026-06-23", "km": 13.0, "mi": 8.1, "min": 59.0, "runs": 1.0, "hr": 147.0, "elev": 1569.0, "loc": "Alberton", "sleep_score": 72.0, "readiness": 71.0, "activity_score": 89.0, "tst": 8.02, "deep": 2.18, "rem": 1.86, "awake": 2.59, "tib": 10.6, "eff": 76.0, "lat": 64, "hrv": 86.0, "rhr": 42.0, "bed": 21.7333333333, "wake": 8.3333333333, "temp_dev": 0.55, "steps": 13692.0, "atl": 7.9142857143, "ctl": 4.1571428571, "acwr": 1.9, "light": 3.98, "restless": 222, "br": 16.5}, {"day": "2026-06-24", "km": 10.0, "mi": 6.2, "min": 45.0, "runs": 1.0, "hr": 140.0, "elev": 1570.0, "loc": "Alberton", "sleep_score": 79.0, "readiness": 75.0, "activity_score": 88.0, "tst": 7.74, "deep": 1.25, "rem": 2.01, "awake": 0.95, "tib": 8.69, "eff": 89.0, "lat": 19, "hrv": 72.0, "rhr": 42.0, "bed": 23.3333333333, "wake": 8.0166666667, "temp_dev": -0.07, "steps": 13140.0, "atl": 9.3428571429, "ctl": 4.3214285714, "acwr": 2.16, "light": 4.48, "restless": 255, "br": 16.9}, {"day": "2026-06-25", "km": 16.2, "mi": 10.1, "min": 74.0, "runs": 2.0, "hr": 132.0, "elev": 1586.5, "loc": "Alberton", "sleep_score": 82.0, "readiness": 79.0, "activity_score": 76.0, "tst": 7.58, "deep": 1.78, "rem": 1.84, "awake": 1.14, "tib": 8.73, "eff": 87.0, "lat": 18, "hrv": 87.0, "rhr": 43.0, "bed": 23.4166666667, "wake": 8.15, "temp_dev": -0.06, "steps": 16196.0, "atl": 11.6571428571, "ctl": 4.725, "acwr": 2.47, "light": 3.97, "restless": 242, "br": 17.4}, {"day": "2026-06-26", "km": 16.5, "mi": 10.3, "min": 76.0, "runs": 2.0, "hr": 128.0, "elev": 1585.5, "loc": "Alberton", "sleep_score": 83.0, "readiness": 81.0, "activity_score": 77.0, "tst": 7.98, "deep": 1.56, "rem": 1.95, "awake": 0.76, "tib": 8.74, "eff": 91.0, "lat": 8, "hrv": 90.0, "rhr": 41.0, "bed": 22.3333333333, "wake": 7.0833333333, "temp_dev": 0.22, "steps": 7619.0, "atl": 12.8428571429, "ctl": 5.2321428571, "acwr": 2.45, "light": 4.47, "restless": 270, "br": 17.1}, {"day": "2026-06-27", "km": 20.0, "mi": 12.4, "min": 81.0, "runs": 1.0, "hr": 162.0, "elev": 1548.0, "loc": "Johannesburg", "sleep_score": 77.0, "readiness": 79.0, "activity_score": 75.0, "tst": 7.34, "deep": 1.27, "rem": 1.95, "awake": 1.09, "tib": 8.43, "eff": 87.0, "lat": 18, "hrv": 84.0, "rhr": 42.0, "bed": 22.7833333333, "wake": 7.2, "temp_dev": 0.05, "steps": 16297.0, "atl": 13.8428571429, "ctl": 5.9464285714, "acwr": 2.33, "light": 4.12, "restless": 259, "br": 17.0}, {"day": "2026-06-28", "km": 8.0, "mi": 5.0, "min": 37.0, "runs": 1.0, "hr": 128.0, "elev": 1583.0, "loc": "Alberton", "sleep_score": null, "readiness": null, "activity_score": 79.0, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": 3687.0, "atl": 13.8142857143, "ctl": 6.2321428571, "acwr": 2.22}, {"day": "2026-06-29", "km": 16.0, "mi": 9.9, "min": 73.0, "runs": 1.0, "hr": 147.0, "elev": 1565.0, "loc": "Alberton", "sleep_score": 64.0, "readiness": 78.0, "activity_score": 100.0, "tst": 6.72, "deep": 1.21, "rem": 1.85, "awake": 2.3, "tib": 9.03, "eff": 75.0, "lat": 42, "hrv": 91.0, "rhr": 41.0, "bed": 23.3, "wake": 8.3166666667, "temp_dev": 0.04, "steps": 13716.0, "atl": 14.2428571429, "ctl": 6.8035714286, "acwr": 2.09, "light": 3.67, "restless": 222, "br": 16.4}, {"day": "2026-06-30", "km": 16.2, "mi": 10.1, "min": 75.0, "runs": 2.0, "hr": 132.0, "elev": 1583.0, "loc": "Alberton", "sleep_score": 79.0, "readiness": 79.0, "activity_score": 100.0, "tst": 7.9, "deep": 1.42, "rem": 2.22, "awake": 1.39, "tib": 9.29, "eff": 85.0, "lat": 4, "hrv": 82.0, "rhr": 42.0, "bed": 23.2833333333, "wake": 8.5666666667, "temp_dev": 0.11, "steps": 8612.0, "atl": 14.7, "ctl": 7.0321428571, "acwr": 2.09, "light": 4.26, "restless": 246, "br": 16.8}, {"day": "2026-07-01", "km": 13.2, "mi": 8.2, "min": 59.0, "runs": 1.0, "hr": 135.0, "elev": 1571.0, "loc": "Alberton", "sleep_score": 72.0, "readiness": 78.0, "activity_score": 92.0, "tst": 6.95, "deep": 1.64, "rem": 1.25, "awake": 2.27, "tib": 9.22, "eff": 75.0, "lat": 6, "hrv": 73.0, "rhr": 42.0, "bed": 22.7666666667, "wake": 8.0, "temp_dev": -0.18, "steps": 2329.0, "atl": 15.1571428571, "ctl": 7.1285714286, "acwr": 2.13, "light": 4.06, "restless": 206, "br": 17.2}, {"day": "2026-07-02", "km": 16.1, "mi": 10.0, "min": 73.0, "runs": 2.0, "hr": 134.0, "elev": 1691.0, "loc": "Randfontein", "sleep_score": 73.0, "readiness": 78.0, "activity_score": 97.0, "tst": 6.6, "deep": 1.38, "rem": 1.88, "awake": 0.65, "tib": 7.25, "eff": 91.0, "lat": 4, "hrv": 88.0, "rhr": 41.0, "bed": 23.9166666667, "wake": 7.1666666667, "temp_dev": 0.11, "steps": 17325.0, "atl": 15.1428571429, "ctl": 7.475, "acwr": 2.03, "light": 3.33, "restless": 156, "br": 17.2}, {"day": "2026-07-03", "km": 8.4, "mi": 5.2, "min": 36.0, "runs": 1.0, "hr": 141.0, "elev": 1690.0, "loc": "Randfontein", "sleep_score": 67.0, "readiness": 75.0, "activity_score": 99.0, "tst": 6.74, "deep": 1.21, "rem": 1.16, "awake": 1.77, "tib": 8.51, "eff": 79.0, "lat": 19, "hrv": 85.0, "rhr": 40.0, "bed": 23.7, "wake": 8.2166666667, "temp_dev": 0.05, "steps": 7609.0, "atl": 13.9857142857, "ctl": 7.6, "acwr": 1.84, "light": 4.38, "restless": 169, "br": 16.4}, {"day": "2026-07-04", "km": 22.1, "mi": 13.7, "min": 92.0, "runs": 1.0, "hr": 154.0, "elev": 1695.0, "loc": "Randfontein", "sleep_score": 77.0, "readiness": 81.0, "activity_score": 93.0, "tst": 6.71, "deep": 1.62, "rem": 1.85, "awake": 0.99, "tib": 7.7, "eff": 87.0, "lat": 8, "hrv": 88.0, "rhr": 40.0, "bed": 23.7666666667, "wake": 7.4666666667, "temp_dev": 0.0, "steps": 20196.0, "atl": 14.2857142857, "ctl": 7.7892857143, "acwr": 1.83, "light": 3.23, "restless": 146, "br": 16.1}, {"day": "2026-07-05", "km": 10.1, "mi": 6.3, "min": 47.0, "runs": 1.0, "hr": 129.0, "elev": 1569.0, "loc": "Alberton", "sleep_score": 69.0, "readiness": 63.0, "activity_score": 95.0, "tst": 7.29, "deep": 1.49, "rem": 1.72, "awake": 1.9, "tib": 9.19, "eff": 79.0, "lat": 6, "hrv": 63.0, "rhr": 44.0, "bed": 0.0666666667, "wake": 9.2666666667, "temp_dev": 0.33, "steps": 9283.0, "atl": 14.5857142857, "ctl": 8.15, "acwr": 1.79, "light": 4.08, "restless": 213, "br": 17.1}, {"day": "2026-07-06", "km": 16.5, "mi": 10.3, "min": 70.0, "runs": 3.0, "hr": 138.0, "elev": 1572.0, "loc": "Alberton", "sleep_score": 84.0, "readiness": 84.0, "activity_score": 94.0, "tst": 7.71, "deep": 1.91, "rem": 2.3, "awake": 1.49, "tib": 9.2, "eff": 84.0, "lat": 16, "hrv": 85.0, "rhr": 41.0, "bed": 22.9, "wake": 8.1, "temp_dev": -0.3, "steps": 14032.0, "atl": 14.6571428571, "ctl": 8.7392857143, "acwr": 1.68, "light": 3.5, "restless": 218, "br": 16.0}, {"day": "2026-07-07", "km": 16.1, "mi": 10.0, "min": 72.0, "runs": 2.0, "hr": 126.0, "elev": 1557.0, "loc": "Alberton", "sleep_score": 83.0, "readiness": 82.0, "activity_score": 89.0, "tst": 7.94, "deep": 2.12, "rem": 2.1, "awake": 1.71, "tib": 9.65, "eff": 82.0, "lat": 21, "hrv": 88.0, "rhr": 40.0, "bed": 23.0666666667, "wake": 8.7166666667, "temp_dev": 0.21, "steps": 16431.0, "atl": 14.6428571429, "ctl": 9.3142857143, "acwr": 1.57, "light": 3.72, "restless": 250, "br": 16.5}, {"day": "2026-07-08", "km": 22.6, "mi": 14.0, "min": 108.0, "runs": 2.0, "hr": 122.0, "elev": 1579.5, "loc": "Alberton", "sleep_score": 72.0, "readiness": 76.0, "activity_score": 76.0, "tst": 7.43, "deep": 1.48, "rem": 1.93, "awake": 1.42, "tib": 8.86, "eff": 84.0, "lat": 50, "hrv": 89.0, "rhr": 40.0, "bed": 21.85, "wake": 6.7, "temp_dev": 0.17, "steps": 25195.0, "atl": 15.9857142857, "ctl": 10.1214285714, "acwr": 1.58, "light": 4.02, "restless": 213, "br": 16.6}, {"day": "2026-07-09", "km": 16.1, "mi": 10.0, "min": 62.0, "runs": 1.0, "hr": 151.0, "elev": 1571.0, "loc": "Alberton", "sleep_score": 90.0, "readiness": 85.0, "activity_score": 86.0, "tst": 8.92, "deep": 1.7, "rem": 2.26, "awake": 1.42, "tib": 10.33, "eff": 86.0, "lat": 9, "hrv": 92.0, "rhr": 40.0, "bed": 21.8333333333, "wake": 8.1666666667, "temp_dev": 0.11, "steps": 3465.0, "atl": 15.9857142857, "ctl": 10.6964285714, "acwr": 1.49, "light": 4.96, "restless": 260, "br": 16.2}, {"day": "2026-07-10", "km": 22.6, "mi": 14.0, "min": 103.0, "runs": 2.0, "hr": 127.0, "elev": 1563.5, "loc": "Alberton", "sleep_score": 71.0, "readiness": 82.0, "activity_score": 97.0, "tst": 7.52, "deep": 1.5, "rem": 1.92, "awake": 2.67, "tib": 10.19, "eff": 74.0, "lat": 34, "hrv": 95.0, "rhr": 40.0, "bed": 22.0833333333, "wake": 8.2666666667, "temp_dev": 0.26, "steps": 21609.0, "atl": 18.0142857143, "ctl": 11.5035714286, "acwr": 1.57, "light": 4.1, "restless": 245, "br": 16.8}, {"day": "2026-07-11", "km": 22.6, "mi": 14.0, "min": 93.0, "runs": 1.0, "hr": 152.0, "elev": 1550.0, "loc": "Johannesburg", "sleep_score": 76.0, "readiness": 78.0, "activity_score": 96.0, "tst": 6.88, "deep": 1.23, "rem": 1.52, "awake": 0.82, "tib": 7.7, "eff": 89.0, "lat": 13, "hrv": 99.0, "rhr": 39.0, "bed": 22.9166666667, "wake": 6.6166666667, "temp_dev": 0.28, "steps": 21887.0, "atl": 18.0857142857, "ctl": 12.3107142857, "acwr": 1.47, "light": 4.14, "restless": 212, "br": 16.2}, {"day": "2026-07-12", "km": 8.5, "mi": 5.3, "min": 41.0, "runs": 1.0, "hr": 124.0, "elev": 1586.0, "loc": "Alberton", "sleep_score": 66.0, "readiness": 72.0, "activity_score": 99.0, "tst": 6.83, "deep": 1.62, "rem": 1.21, "awake": 2.83, "tib": 9.66, "eff": 71.0, "lat": 18, "hrv": 87.0, "rhr": 40.0, "bed": 22.8666666667, "wake": 8.5333333333, "temp_dev": 0.24, "steps": 8361.0, "atl": 17.8571428571, "ctl": 12.6142857143, "acwr": 1.42, "light": 4.01, "restless": 236, "br": 16.9}, {"day": "2026-07-13", "km": 18.2, "mi": 11.3, "min": 76.0, "runs": 3.0, "hr": 144.0, "elev": 1572.0, "loc": "Alberton", "sleep_score": 85.0, "readiness": 88.0, "activity_score": 96.0, "tst": 8.57, "deep": 1.57, "rem": 2.16, "awake": 2.05, "tib": 10.61, "eff": 81.0, "lat": 30, "hrv": 90.0, "rhr": 41.0, "bed": 20.95, "wake": 7.5666666667, "temp_dev": 0.23, "steps": 13015.0, "atl": 18.1, "ctl": 13.2642857143, "acwr": 1.36, "light": 4.84, "restless": 264, "br": 17.2}, {"day": "2026-07-14", "km": 16.7, "mi": 10.4, "min": 90.0, "runs": 2.0, "hr": 124.0, "elev": 1586.0, "loc": "Treadmill", "sleep_score": 76.0, "readiness": 81.0, "activity_score": 91.0, "tst": 7.72, "deep": 1.15, "rem": 1.96, "awake": 1.92, "tib": 9.64, "eff": 80.0, "lat": 4, "hrv": 88.0, "rhr": 40.0, "bed": 22.45, "wake": 8.0833333333, "temp_dev": -0.04, "steps": 15990.0, "atl": 18.1857142857, "ctl": 13.8607142857, "acwr": 1.31, "light": 4.61, "restless": 251, "br": 16.4}, {"day": "2026-07-15", "km": 22.6, "mi": 14.0, "min": 107.0, "runs": 2.0, "hr": 124.0, "elev": 1575.5, "loc": "Alberton", "sleep_score": 74.0, "readiness": 81.0, "activity_score": 91.0, "tst": 7.15, "deep": 1.38, "rem": 1.68, "awake": 1.82, "tib": 8.97, "eff": 80.0, "lat": 4, "hrv": 85.0, "rhr": 39.0, "bed": 23.0666666667, "wake": 8.05, "temp_dev": 0.39, "steps": 8670.0, "atl": 18.1857142857, "ctl": 14.6678571429, "acwr": 1.24, "light": 4.09, "restless": 217, "br": 16.6}, {"day": "2026-07-16", "km": 23.9, "mi": 14.9, "min": 94.0, "runs": 2.0, "hr": 144.0, "elev": 1568.5, "loc": "Alberton", "sleep_score": 84.0, "readiness": 86.0, "activity_score": 99.0, "tst": 7.88, "deep": 1.88, "rem": 2.15, "awake": 1.02, "tib": 8.9, "eff": 89.0, "lat": 8, "hrv": 91.0, "rhr": 41.0, "bed": 23.1833333333, "wake": 8.0833333333, "temp_dev": 0.05, "steps": 21326.0, "atl": 19.3, "ctl": 15.5214285714, "acwr": 1.24, "light": 3.86, "restless": 273, "br": 17.2}, {"day": "2026-07-17", "km": 12.9, "mi": 8.0, "min": 61.0, "runs": 1.0, "hr": 128.0, "elev": 1567.0, "loc": "Alberton", "sleep_score": 82.0, "readiness": 81.0, "activity_score": 98.0, "tst": 7.74, "deep": 1.44, "rem": 1.71, "awake": 0.86, "tib": 8.6, "eff": 90.0, "lat": 16, "hrv": 85.0, "rhr": 42.0, "bed": 22.8, "wake": 7.4, "temp_dev": -0.1, "steps": 15916.0, "atl": 17.9142857143, "ctl": 15.6892857143, "acwr": 1.14, "light": 4.59, "restless": 255, "br": 17.4}, {"day": "2026-07-18", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": 54.0, "readiness": 70.0, "activity_score": 97.0, "tst": 5.24, "deep": 1.15, "rem": 1.35, "awake": 1.96, "tib": 7.2, "eff": 73.0, "lat": 53, "hrv": 94.0, "rhr": 41.0, "bed": 22.8, "wake": 6.0, "temp_dev": 0.23, "steps": 1904.0, "atl": 14.6857142857, "ctl": 15.225, "acwr": 0.96, "light": 2.74, "restless": 156, "br": 17.8}, {"day": "2026-07-19", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 13.4714285714, "ctl": 14.9321428571, "acwr": 0.9}, {"day": "2026-07-20", "km": 14.6, "mi": 9.1, "min": 70.0, "runs": 2.0, "hr": 120.0, "elev": 6.5, "loc": "eThekwini", "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 12.9571428571, "ctl": 14.9892857143, "acwr": 0.86}, {"day": "2026-07-21", "km": 26.9, "mi": 16.7, "min": 118.0, "runs": 6.0, "hr": 135.0, "elev": 52.0, "loc": "eThekwini", "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 14.4142857143, "ctl": 15.4857142857, "acwr": 0.93}, {"day": "2026-07-22", "km": 12.9, "mi": 8.0, "min": 59.0, "runs": 1.0, "hr": 124.0, "elev": 51.0, "loc": "eThekwini", "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 13.0285714286, "ctl": 15.5892857143, "acwr": 0.84}, {"day": "2026-07-23", "km": 22.6, "mi": 14.0, "min": 105.0, "runs": 2.0, "hr": 123.0, "elev": 9.5, "loc": "eThekwini", "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 12.8428571429, "ctl": 15.8178571429, "acwr": 0.81}, {"day": "2026-07-24", "km": 21.0, "mi": 13.0, "min": 84.0, "runs": 4.0, "hr": 138.0, "elev": 49.0, "loc": "eThekwini", "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 14.0, "ctl": 15.9785714286, "acwr": 0.88}, {"day": "2026-07-25", "km": 18.2, "mi": 11.3, "min": 84.0, "runs": 2.0, "hr": 130.0, "elev": 782.5, "loc": "Alberton", "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 16.6, "ctl": 15.9142857143, "acwr": 1.04}, {"day": "2026-07-26", "km": 29.0, "mi": 18.0, "min": 131.0, "runs": 1.0, "hr": 148.0, "elev": 1551.0, "loc": "Alberton", "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 20.7428571429, "ctl": 16.6642857143, "acwr": 1.24}, {"day": "2026-07-27", "km": 13.0, "mi": 8.1, "min": 59.0, "runs": 1.0, "hr": 136.0, "elev": 1567.0, "loc": "Alberton", "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 20.5142857143, "ctl": 16.5571428571, "acwr": 1.24}, {"day": "2026-07-28", "km": 5.1, "mi": 3.2, "min": 21.0, "runs": 2.0, "hr": 130.0, "elev": 1572.0, "loc": "Alberton", "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 17.4, "ctl": 16.1607142857, "acwr": 1.08}, {"day": "2026-07-29", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 15.5571428571, "ctl": 15.6892857143, "acwr": 0.99}, {"day": "2026-07-30", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 12.3285714286, "ctl": 15.1142857143, "acwr": 0.82}, {"day": "2026-07-31", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 9.3285714286, "ctl": 14.8142857143, "acwr": 0.63}, {"day": "2026-08-01", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 6.7285714286, "ctl": 14.025, "acwr": 0.48}, {"day": "2026-08-02", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 2.5857142857, "ctl": 13.6642857143, "acwr": 0.19}, {"day": "2026-08-03", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.7285714286, "ctl": 13.075, "acwr": 0.06}, {"day": "2026-08-04", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 12.5, "acwr": 0.0}, {"day": "2026-08-05", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 11.6928571429, "acwr": 0.0}, {"day": "2026-08-06", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 11.1178571429, "acwr": 0.0}, {"day": "2026-08-07", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 10.3107142857, "acwr": 0.0}, {"day": "2026-08-08", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 9.5035714286, "acwr": 0.0}, {"day": "2026-08-09", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 9.2, "acwr": 0.0}, {"day": "2026-08-10", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 8.55, "acwr": 0.0}, {"day": "2026-08-11", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 7.9535714286, "acwr": 0.0}, {"day": "2026-08-12", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 7.1464285714, "acwr": 0.0}, {"day": "2026-08-13", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 6.2928571429, "acwr": 0.0}, {"day": "2026-08-14", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 5.8321428571, "acwr": 0.0}, {"day": "2026-08-15", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 5.8321428571, "acwr": 0.0}, {"day": "2026-08-16", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 5.8321428571, "acwr": 0.0}, {"day": "2026-08-17", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 5.3107142857, "acwr": 0.0}, {"day": "2026-08-18", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 4.35, "acwr": 0.0}, {"day": "2026-08-19", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 3.8892857143, "acwr": 0.0}, {"day": "2026-08-20", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 3.0821428571, "acwr": 0.0}, {"day": "2026-08-21", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 2.3321428571, "acwr": 0.0}, {"day": "2026-08-22", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 1.6821428571, "acwr": 0.0}, {"day": "2026-08-23", "km": 0.0, "mi": 0.0, "min": null, "runs": 0.0, "hr": null, "elev": null, "loc": null, "sleep_score": null, "readiness": null, "activity_score": null, "tst": null, "deep": null, "rem": null, "awake": null, "tib": null, "eff": null, "lat": null, "hrv": null, "rhr": null, "bed": null, "wake": null, "temp_dev": null, "steps": null, "atl": 0.0, "ctl": 0.6464285714, "acwr": 0.0}], "weeks": [{"start": "2026-05-11", "km": 42.3, "mi": 26.3, "runs": 11.0, "sleep": 7.9, "readiness": 86.3, "hrv": 93.9, "rhr": 38.3}, {"start": "2026-05-18", "km": 91.8, "mi": 57.0, "runs": 13.0, "sleep": 7.3, "readiness": 85.1, "hrv": 86.4, "rhr": 38.4}, {"start": "2026-05-25", "km": 27.0, "mi": 16.7, "runs": 6.0, "sleep": 7.6, "readiness": 80.7, "hrv": 84.0, "rhr": 39.8}, {"start": "2026-06-01", "km": 48.4, "mi": 30.0, "runs": 6.0, "sleep": 7.6, "readiness": 80.8, "hrv": 82.5, "rhr": 40.3}, {"start": "2026-06-08", "km": 0.0, "mi": 0.0, "runs": 0.0, "sleep": 7.3, "readiness": 83.2, "hrv": 89.4, "rhr": 39.0}, {"start": "2026-06-15", "km": 29.4, "mi": 18.3, "runs": 3.0, "sleep": 6.2, "readiness": 64.5, "hrv": 78.3, "rhr": 42.7}, {"start": "2026-06-22", "km": 96.7, "mi": 60.2, "runs": 9.0, "sleep": 7.7, "readiness": 76.3, "hrv": 83.8, "rhr": 42.0}, {"start": "2026-06-29", "km": 102.1, "mi": 63.4, "runs": 9.0, "sleep": 7.0, "readiness": 76.0, "hrv": 81.4, "rhr": 41.4}, {"start": "2026-07-06", "km": 125.0, "mi": 77.6, "runs": 12.0, "sleep": 7.6, "readiness": 79.9, "hrv": 90.7, "rhr": 40.0}, {"start": "2026-07-13", "km": 94.3, "mi": 58.6, "runs": 10.0, "sleep": 7.4, "readiness": 81.2, "hrv": 88.8, "rhr": 40.7}, {"start": "2026-07-20", "km": 145.2, "mi": 90.1, "runs": 18.0, "sleep": null, "readiness": null, "hrv": null, "rhr": null}, {"start": "2026-07-27", "km": 18.1, "mi": 11.3, "runs": 3.0, "sleep": null, "readiness": null, "hrv": null, "rhr": null}, {"start": "2026-08-03", "km": 0.0, "mi": 0.0, "runs": 0.0, "sleep": null, "readiness": null, "hrv": null, "rhr": null}, {"start": "2026-08-10", "km": 0.0, "mi": 0.0, "runs": 0.0, "sleep": null, "readiness": null, "hrv": null, "rhr": null}, {"start": "2026-08-17", "km": 0.0, "mi": 0.0, "runs": 0.0, "sleep": null, "readiness": null, "hrv": null, "rhr": null}], "stats": {"nights": 99, "sleep_mean": 7.44, "sleep_sd": 1.0, "awake_mean": 87.0, "eff_mean": 84.0, "lat_mean": 20.0, "hrv_mean": 88.0, "rhr_mean": 39.9, "bed_mean": 22.78, "bed_sd": 1.15, "wake_mean": 7.68, "wake_sd": 0.97, "runs": 100, "total_km": 820.0, "oura_last": "2026-07-18", "garmin_last": "2026-07-28"}, "activities": [{"day": "2026-07-28", "t": "09:13", "km": 1.87, "mi": 1.16, "sec": 409, "pace": "3:38", "hr": 141, "maxhr": 170, "asc": 12, "loc": "Alberton", "elev": 1574}, {"day": "2026-07-28", "t": "08:47", "km": 3.23, "mi": 2.01, "sec": 880, "pace": "4:32", "hr": 120, "maxhr": 132, "asc": 23, "loc": "Alberton", "elev": 1570}, {"day": "2026-07-27", "t": "08:03", "km": 12.99, "mi": 8.07, "sec": 3550, "pace": "4:33", "hr": 136, "maxhr": 158, "asc": 134, "loc": "Alberton", "elev": 1567}, {"day": "2026-07-26", "t": "10:07", "km": 28.99, "mi": 18.01, "sec": 7853, "pace": "4:30", "hr": 148, "maxhr": 169, "asc": 284, "loc": "Alberton", "elev": 1551}, {"day": "2026-07-25", "t": "14:16", "km": 13.3, "mi": 8.26, "sec": 3666, "pace": "4:35", "hr": 138, "maxhr": 164, "asc": 94, "loc": "Alberton", "elev": 1558}, {"day": "2026-07-25", "t": "07:14", "km": 4.86, "mi": 3.02, "sec": 1364, "pace": "4:40", "hr": 122, "maxhr": 137, "asc": 49, "loc": "eThekwini", "elev": 7}, {"day": "2026-07-24", "t": "17:05", "km": 4.84, "mi": 3.01, "sec": 1410, "pace": "4:51", "hr": 127, "maxhr": 157, "asc": 76, "loc": "eThekwini", "elev": 8}, {"day": "2026-07-24", "t": "09:01", "km": 3.24, "mi": 2.01, "sec": 906, "pace": "4:39", "hr": 138, "maxhr": 151, "asc": 40, "loc": "eThekwini", "elev": 51}, {"day": "2026-07-24", "t": "08:22", "km": 9.68, "mi": 6.01, "sec": 1832, "pace": "3:09", "hr": 169, "maxhr": 176, "asc": 67, "loc": "eThekwini", "elev": 49}, {"day": "2026-07-24", "t": "07:56", "km": 3.23, "mi": 2.01, "sec": 864, "pace": "4:27", "hr": 120, "maxhr": 133, "asc": 15, "loc": "eThekwini", "elev": 49}, {"day": "2026-07-23", "t": "17:01", "km": 6.45, "mi": 4.01, "sec": 1879, "pace": "4:51", "hr": 119, "maxhr": 140, "asc": 63, "loc": "eThekwini", "elev": 8}, {"day": "2026-07-23", "t": "08:44", "km": 16.11, "mi": 10.01, "sec": 4440, "pace": "4:35", "hr": 127, "maxhr": 146, "asc": 97, "loc": "eThekwini", "elev": 11}, {"day": "2026-07-22", "t": "08:17", "km": 12.88, "mi": 8.0, "sec": 3553, "pace": "4:35", "hr": 124, "maxhr": 145, "asc": 65, "loc": "eThekwini", "elev": 51}, {"day": "2026-07-21", "t": "17:41", "km": 2.42, "mi": 1.5, "sec": 737, "pace": "5:04", "hr": 133, "maxhr": 150, "asc": 45, "loc": "eThekwini", "elev": 51}, {"day": "2026-07-21", "t": "16:53", "km": 9.02, "mi": 5.6, "sec": 2602, "pace": "4:48", "hr": 144, "maxhr": 173, "asc": 28, "loc": "eThekwini", "elev": 51}, {"day": "2026-07-21", "t": "16:29", "km": 2.44, "mi": 1.52, "sec": 646, "pace": "4:24", "hr": 129, "maxhr": 139, "asc": 6, "loc": "eThekwini", "elev": 52}, {"day": "2026-07-21", "t": "08:41", "km": 2.42, "mi": 1.5, "sec": 679, "pace": "4:40", "hr": 128, "maxhr": 148, "asc": 21, "loc": "eThekwini", "elev": 54}, {"day": "2026-07-21", "t": "08:04", "km": 8.2, "mi": 5.1, "sec": 1746, "pace": "3:32", "hr": 155, "maxhr": 167, "asc": 35, "loc": "eThekwini", "elev": 52}, {"day": "2026-07-21", "t": "07:44", "km": 2.42, "mi": 1.5, "sec": 668, "pace": "4:36", "hr": 119, "maxhr": 132, "asc": 10, "loc": "eThekwini", "elev": 53}, {"day": "2026-07-20", "t": "17:03", "km": 6.53, "mi": 4.06, "sec": 1848, "pace": "4:43", "hr": 118, "maxhr": 139, "asc": 55, "loc": "eThekwini", "elev": 10}, {"day": "2026-07-20", "t": "10:30", "km": 8.06, "mi": 5.01, "sec": 2344, "pace": "4:50", "hr": 123, "maxhr": 147, "asc": 97, "loc": "eThekwini", "elev": 3}, {"day": "2026-07-17", "t": "10:35", "km": 12.88, "mi": 8.0, "sec": 3652, "pace": "4:43", "hr": 128, "maxhr": 149, "asc": 117, "loc": "Alberton", "elev": 1567}, {"day": "2026-07-16", "t": "15:52", "km": 17.38, "mi": 10.8, "sec": 3989, "pace": "3:49", "hr": 154, "maxhr": 177, "asc": 74, "loc": "Alberton", "elev": 1570}, {"day": "2026-07-16", "t": "08:58", "km": 6.5, "mi": 4.04, "sec": 1660, "pace": "4:15", "hr": 135, "maxhr": 160, "asc": 52, "loc": "Alberton", "elev": 1567}, {"day": "2026-07-15", "t": "16:11", "km": 6.45, "mi": 4.01, "sec": 1814, "pace": "4:41", "hr": 125, "maxhr": 143, "asc": 71, "loc": "Alberton", "elev": 1583}, {"day": "2026-07-15", "t": "09:21", "km": 16.11, "mi": 10.01, "sec": 4599, "pace": "4:45", "hr": 124, "maxhr": 148, "asc": 135, "loc": "Alberton", "elev": 1568}, {"day": "2026-07-14", "t": "16:22", "km": 8.44, "mi": 5.24, "sec": 3077, "pace": "6:04", "hr": 116, "maxhr": 143, "asc": null, "loc": "Treadmill", "elev": null}, {"day": "2026-07-14", "t": "09:49", "km": 8.24, "mi": 5.12, "sec": 2330, "pace": "4:42", "hr": 132, "maxhr": 148, "asc": 85, "loc": "Alberton", "elev": 1586}, {"day": "2026-07-13", "t": "10:33", "km": 3.24, "mi": 2.01, "sec": 916, "pace": "4:42", "hr": 131, "maxhr": 147, "asc": 33, "loc": "Alberton", "elev": 1572}, {"day": "2026-07-13", "t": "09:44", "km": 11.65, "mi": 7.24, "sec": 2647, "pace": "3:47", "hr": 161, "maxhr": 181, "asc": 30, "loc": "Alberton", "elev": 1573}, {"day": "2026-07-13", "t": "09:08", "km": 3.36, "mi": 2.09, "sec": 984, "pace": "4:52", "hr": 139, "maxhr": 156, "asc": 20, "loc": "Alberton", "elev": 1570}, {"day": "2026-07-12", "t": "16:01", "km": 8.51, "mi": 5.29, "sec": 2445, "pace": "4:47", "hr": 124, "maxhr": 155, "asc": 88, "loc": "Alberton", "elev": 1586}, {"day": "2026-07-11", "t": "07:40", "km": 22.55, "mi": 14.01, "sec": 5561, "pace": "4:06", "hr": 152, "maxhr": 179, "asc": 196, "loc": "Johannesburg", "elev": 1550}, {"day": "2026-07-10", "t": "15:40", "km": 6.46, "mi": 4.01, "sec": 1811, "pace": "4:40", "hr": 125, "maxhr": 146, "asc": 16, "loc": "Alberton", "elev": 1557}, {"day": "2026-07-10", "t": "09:43", "km": 16.12, "mi": 10.02, "sec": 4388, "pace": "4:32", "hr": 129, "maxhr": 151, "asc": 134, "loc": "Alberton", "elev": 1570}, {"day": "2026-07-09", "t": "10:28", "km": 16.12, "mi": 10.02, "sec": 3733, "pace": "3:51", "hr": 151, "maxhr": 177, "asc": 80, "loc": "Alberton", "elev": 1571}, {"day": "2026-07-08", "t": "15:50", "km": 16.11, "mi": 10.01, "sec": 4551, "pace": "4:42", "hr": 125, "maxhr": 146, "asc": 141, "loc": "Alberton", "elev": 1575}, {"day": "2026-07-08", "t": "07:19", "km": 6.52, "mi": 4.05, "sec": 1930, "pace": "4:56", "hr": 120, "maxhr": 136, "asc": 71, "loc": "Alberton", "elev": 1584}, {"day": "2026-07-07", "t": "15:36", "km": 8.02, "mi": 4.98, "sec": 2169, "pace": "4:30", "hr": 128, "maxhr": 154, "asc": 44, "loc": "Alberton", "elev": 1557}, {"day": "2026-07-07", "t": "10:06", "km": 8.05, "mi": 5.0, "sec": 2162, "pace": "4:28", "hr": 123, "maxhr": 138, "asc": null, "loc": "Treadmill", "elev": null}, {"day": "2026-07-06", "t": "10:41", "km": 3.24, "mi": 2.01, "sec": 890, "pace": "4:34", "hr": 140, "maxhr": 163, "asc": 34, "loc": "Alberton", "elev": 1572}, {"day": "2026-07-06", "t": "09:59", "km": 9.89, "mi": 6.15, "sec": 2283, "pace": "3:50", "hr": 157, "maxhr": 174, "asc": 25, "loc": "Alberton", "elev": 1572}, {"day": "2026-07-06", "t": "09:30", "km": 3.39, "mi": 2.11, "sec": 1013, "pace": "4:58", "hr": 117, "maxhr": 143, "asc": 22, "loc": "Alberton", "elev": 1570}, {"day": "2026-07-05", "t": "13:44", "km": 10.09, "mi": 6.27, "sec": 2799, "pace": "4:37", "hr": 129, "maxhr": 146, "asc": 89, "loc": "Alberton", "elev": 1569}, {"day": "2026-07-04", "t": "09:45", "km": 22.14, "mi": 13.76, "sec": 5512, "pace": "4:08", "hr": 154, "maxhr": 172, "asc": 112, "loc": "Randfontein", "elev": 1695}, {"day": "2026-07-03", "t": "09:26", "km": 8.43, "mi": 5.24, "sec": 2173, "pace": "4:17", "hr": 141, "maxhr": 153, "asc": 57, "loc": "Randfontein", "elev": 1690}, {"day": "2026-07-02", "t": "16:32", "km": 5.02, "mi": 3.12, "sec": 1384, "pace": "4:35", "hr": 137, "maxhr": 181, "asc": 21, "loc": "Randfontein", "elev": 1692}, {"day": "2026-07-02", "t": "09:54", "km": 11.07, "mi": 6.88, "sec": 2985, "pace": "4:29", "hr": 132, "maxhr": 155, "asc": 63, "loc": "Randfontein", "elev": 1690}, {"day": "2026-07-01", "t": "08:53", "km": 13.16, "mi": 8.18, "sec": 3514, "pace": "4:27", "hr": 135, "maxhr": 154, "asc": 114, "loc": "Alberton", "elev": 1571}, {"day": "2026-06-30", "t": "16:33", "km": 8.18, "mi": 5.08, "sec": 2298, "pace": "4:40", "hr": 131, "maxhr": 148, "asc": 82, "loc": "Alberton", "elev": 1582}, {"day": "2026-06-30", "t": "10:44", "km": 8.05, "mi": 5.0, "sec": 2197, "pace": "4:32", "hr": 133, "maxhr": 154, "asc": 83, "loc": "Alberton", "elev": 1584}, {"day": "2026-06-29", "t": "11:02", "km": 16.04, "mi": 9.97, "sec": 4362, "pace": "4:31", "hr": 147, "maxhr": 165, "asc": 140, "loc": "Alberton", "elev": 1565}, {"day": "2026-06-28", "t": "08:55", "km": 8.02, "mi": 4.98, "sec": 2239, "pace": "4:39", "hr": 128, "maxhr": 148, "asc": 85, "loc": "Alberton", "elev": 1583}, {"day": "2026-06-27", "t": "08:00", "km": 20.01, "mi": 12.43, "sec": 4858, "pace": "4:02", "hr": 162, "maxhr": 186, "asc": 180, "loc": "Johannesburg", "elev": 1548}, {"day": "2026-06-26", "t": "16:34", "km": 8.16, "mi": 5.07, "sec": 2282, "pace": "4:39", "hr": 126, "maxhr": 144, "asc": 83, "loc": "Alberton", "elev": 1584}, {"day": "2026-06-26", "t": "08:55", "km": 8.31, "mi": 5.16, "sec": 2307, "pace": "4:37", "hr": 131, "maxhr": 150, "asc": 89, "loc": "Alberton", "elev": 1587}, {"day": "2026-06-25", "t": "16:29", "km": 8.02, "mi": 4.98, "sec": 2275, "pace": "4:43", "hr": 128, "maxhr": 151, "asc": 80, "loc": "Alberton", "elev": 1585}, {"day": "2026-06-25", "t": "09:21", "km": 8.19, "mi": 5.09, "sec": 2192, "pace": "4:27", "hr": 135, "maxhr": 152, "asc": 85, "loc": "Alberton", "elev": 1588}, {"day": "2026-06-24", "t": "13:34", "km": 10.01, "mi": 6.22, "sec": 2691, "pace": "4:28", "hr": 140, "maxhr": 161, "asc": 99, "loc": "Alberton", "elev": 1570}, {"day": "2026-06-23", "t": "09:22", "km": 13.01, "mi": 8.08, "sec": 3531, "pace": "4:31", "hr": 147, "maxhr": 166, "asc": 114, "loc": "Alberton", "elev": 1569}, {"day": "2026-06-22", "t": "09:37", "km": 13.01, "mi": 8.08, "sec": 3620, "pace": "4:38", "hr": 157, "maxhr": 187, "asc": 117, "loc": "Alberton", "elev": 1572}, {"day": "2026-06-21", "t": "09:26", "km": 8.16, "mi": 5.07, "sec": 2270, "pace": "4:38", "hr": 142, "maxhr": 160, "asc": 83, "loc": "Alberton", "elev": 1586}, {"day": "2026-06-20", "t": "14:04", "km": 13.01, "mi": 8.08, "sec": 3635, "pace": "4:39", "hr": 149, "maxhr": 171, "asc": 122, "loc": "Alberton", "elev": 1565}, {"day": "2026-06-19", "t": "15:52", "km": 8.18, "mi": 5.08, "sec": 2288, "pace": "4:39", "hr": 138, "maxhr": 160, "asc": 63, "loc": "Alberton", "elev": 1572}, {"day": "2026-06-06", "t": "08:10", "km": 15.07, "mi": 9.36, "sec": 2908, "pace": "3:12", "hr": 185, "maxhr": 196, "asc": 142, "loc": "Peoria", "elev": 138}, {"day": "2026-06-06", "t": "07:15", "km": 1.7, "mi": 1.06, "sec": 536, "pace": "5:15", "hr": 124, "maxhr": 136, "asc": 4, "loc": "Peoria", "elev": 139}, {"day": "2026-06-05", "t": "15:52", "km": 4.92, "mi": 3.06, "sec": 1344, "pace": "4:33", "hr": 137, "maxhr": 156, "asc": 15, "loc": "Peoria", "elev": 181}, {"day": "2026-06-04", "t": "11:13", "km": 6.44, "mi": 4.0, "sec": 2083, "pace": "5:23", "hr": 123, "maxhr": 147, "asc": 24, "loc": "Peoria", "elev": 179}, {"day": "2026-06-03", "t": "09:44", "km": 10.47, "mi": 6.51, "sec": 3012, "pace": "4:47", "hr": 143, "maxhr": 172, "asc": 68, "loc": "Peoria", "elev": 139}, {"day": "2026-06-02", "t": "16:15", "km": 9.85, "mi": 6.12, "sec": 2765, "pace": "4:40", "hr": 142, "maxhr": 159, "asc": 19, "loc": "Peoria", "elev": 175}, {"day": "2026-05-29", "t": "13:10", "km": 2.3, "mi": 1.43, "sec": 617, "pace": "4:28", "hr": 134, "maxhr": 157, "asc": 21, "loc": "Springdale", "elev": 386}, {"day": "2026-05-28", "t": "15:10", "km": 4.86, "mi": 3.02, "sec": 1350, "pace": "4:37", "hr": 129, "maxhr": 155, "asc": 54, "loc": "Springdale", "elev": 376}, {"day": "2026-05-27", "t": "19:16", "km": 3.38, "mi": 2.1, "sec": 977, "pace": "4:49", "hr": 136, "maxhr": 155, "asc": 4, "loc": "Fayetteville", "elev": 388}, {"day": "2026-05-27", "t": "13:09", "km": 2.06, "mi": 1.28, "sec": 576, "pace": "4:39", "hr": 126, "maxhr": 152, "asc": 21, "loc": "Springdale", "elev": 396}, {"day": "2026-05-26", "t": "15:49", "km": 4.73, "mi": 2.94, "sec": 1337, "pace": "4:42", "hr": 133, "maxhr": 160, "asc": 76, "loc": "Fayetteville", "elev": 382}, {"day": "2026-05-25", "t": "08:02", "km": 9.68, "mi": 6.01, "sec": 2649, "pace": "4:33", "hr": 124, "maxhr": 158, "asc": 59, "loc": "Peoria", "elev": 142}, {"day": "2026-05-24", "t": "15:38", "km": 6.48, "mi": 4.03, "sec": 1830, "pace": "4:42", "hr": 120, "maxhr": 134, "asc": 18, "loc": "Peoria", "elev": 183}, {"day": "2026-05-24", "t": "09:24", "km": 8.46, "mi": 5.26, "sec": 2323, "pace": "4:34", "hr": 120, "maxhr": 135, "asc": 16, "loc": "Peoria", "elev": 182}, {"day": "2026-05-23", "t": "11:29", "km": 3.04, "mi": 1.89, "sec": 947, "pace": "5:11", "hr": 118, "maxhr": 133, "asc": 13, "loc": "Peoria", "elev": 179}, {"day": "2026-05-23", "t": "10:41", "km": 3.04, "mi": 1.89, "sec": 918, "pace": "5:01", "hr": 142, "maxhr": 184, "asc": 1, "loc": "Peoria", "elev": 176}, {"day": "2026-05-23", "t": "10:13", "km": 3.32, "mi": 2.06, "sec": 907, "pace": "4:33", "hr": 118, "maxhr": 135, "asc": 10, "loc": "Peoria", "elev": 179}, {"day": "2026-05-22", "t": "10:12", "km": 12.27, "mi": 7.62, "sec": 3680, "pace": "4:59", "hr": 117, "maxhr": 180, "asc": 73, "loc": "Peoria", "elev": 148}, {"day": "2026-05-21", "t": "16:23", "km": 9.66, "mi": 6.0, "sec": 2682, "pace": "4:37", "hr": 123, "maxhr": 154, "asc": 58, "loc": "Peoria", "elev": 144}, {"day": "2026-05-21", "t": "10:34", "km": 9.91, "mi": 6.16, "sec": 2766, "pace": "4:39", "hr": 121, "maxhr": 134, "asc": 21, "loc": "Peoria", "elev": 175}, {"day": "2026-05-20", "t": "11:26", "km": 3.23, "mi": 2.01, "sec": 999, "pace": "5:09", "hr": 126, "maxhr": 142, "asc": 8, "loc": "Peoria", "elev": 223}, {"day": "2026-05-20", "t": "10:44", "km": 9.53, "mi": 5.92, "sec": 1921, "pace": "3:21", "hr": 158, "maxhr": 184, "asc": 33, "loc": "Peoria County", "elev": 198}, {"day": "2026-05-20", "t": "10:17", "km": 3.25, "mi": 2.02, "sec": 915, "pace": "4:41", "hr": 126, "maxhr": 159, "asc": 20, "loc": "Peoria County", "elev": 208}, {"day": "2026-05-19", "t": "16:26", "km": 6.73, "mi": 4.18, "sec": 1883, "pace": "4:39", "hr": 118, "maxhr": 135, "asc": 25, "loc": "Peoria", "elev": 177}, {"day": "2026-05-19", "t": "10:13", "km": 12.91, "mi": 8.02, "sec": 3665, "pace": "4:43", "hr": 128, "maxhr": 163, "asc": 72, "loc": "Peoria", "elev": 140}, {"day": "2026-05-17", "t": "18:01", "km": 1.9, "mi": 1.18, "sec": 632, "pace": "5:32", "hr": 146, "maxhr": 160, "asc": 7, "loc": "Terre Haute", "elev": 147}, {"day": "2026-05-17", "t": "16:18", "km": 2.43, "mi": 1.51, "sec": 677, "pace": "4:38", "hr": 151, "maxhr": 169, "asc": 14, "loc": "Terre Haute", "elev": 148}, {"day": "2026-05-17", "t": "10:11", "km": 2.03, "mi": 1.26, "sec": 561, "pace": "4:36", "hr": 131, "maxhr": 146, "asc": 4, "loc": "Terre Haute", "elev": 170}, {"day": "2026-05-16", "t": "13:02", "km": 0.54, "mi": 0.34, "sec": 447, "pace": "13:49", "hr": 108, "maxhr": 147, "asc": 3, "loc": "Terre Haute", "elev": 143}, {"day": "2026-05-16", "t": "12:16", "km": 4.97, "mi": 3.09, "sec": 1323, "pace": "4:26", "hr": 130, "maxhr": 147, "asc": 11, "loc": "Terre Haute", "elev": 146}, {"day": "2026-05-15", "t": "13:33", "km": 11.29, "mi": 7.02, "sec": 2996, "pace": "4:25", "hr": 125, "maxhr": 144, "asc": 28, "loc": "Terre Haute", "elev": 142}, {"day": "2026-05-14", "t": "16:09", "km": 5.07, "mi": 3.15, "sec": 1433, "pace": "4:42", "hr": 116, "maxhr": 125, "asc": 10, "loc": "Peoria", "elev": 178}, {"day": "2026-05-14", "t": "10:03", "km": 3.23, "mi": 2.01, "sec": 877, "pace": "4:31", "hr": 130, "maxhr": 152, "asc": 14, "loc": "Peoria", "elev": 179}, {"day": "2026-05-14", "t": "09:42", "km": 2.64, "mi": 1.64, "sec": 843, "pace": "5:19", "hr": 133, "maxhr": 164, "asc": 2, "loc": "Peoria", "elev": 176}, {"day": "2026-05-14", "t": "09:12", "km": 3.35, "mi": 2.08, "sec": 900, "pace": "4:28", "hr": 127, "maxhr": 145, "asc": 11, "loc": "Peoria", "elev": 179}, {"day": "2026-05-13", "t": "15:41", "km": 4.85, "mi": 3.01, "sec": 1348, "pace": "4:37", "hr": 116, "maxhr": 131, "asc": 9, "loc": "Peoria", "elev": 180}], "sleep_contrib": {"2026-04-04": {"deep_sleep": 27, "efficiency": 39, "latency": 72, "rem_sleep": 9, "restfulness": 36, "timing": 93, "total_sleep": 22}, "2026-04-05": {"deep_sleep": 95, "efficiency": 96, "latency": 75, "rem_sleep": 83, "restfulness": 77, "timing": 95, "total_sleep": 74}, "2026-04-06": {"deep_sleep": 96, "efficiency": 97, "latency": 94, "rem_sleep": 84, "restfulness": 77, "timing": 86, "total_sleep": 75}, "2026-04-07": {"deep_sleep": 81, "efficiency": 81, "latency": 17, "rem_sleep": 54, "restfulness": 53, "timing": 100, "total_sleep": 71}, "2026-04-08": {"deep_sleep": 78, "efficiency": 93, "latency": 97, "rem_sleep": 94, "restfulness": 69, "timing": 100, "total_sleep": 82}, "2026-04-09": {"deep_sleep": 84, "efficiency": 96, "latency": 67, "rem_sleep": 95, "restfulness": 71, "timing": 100, "total_sleep": 80}, "2026-04-10": {"deep_sleep": 85, "efficiency": 90, "latency": 83, "rem_sleep": 97, "restfulness": 75, "timing": 100, "total_sleep": 80}, "2026-04-11": {"deep_sleep": 82, "efficiency": 83, "latency": 54, "rem_sleep": 51, "restfulness": 75, "timing": 100, "total_sleep": 73}, "2026-04-12": {"deep_sleep": 78, "efficiency": 95, "latency": 67, "rem_sleep": 80, "restfulness": 73, "timing": 87, "total_sleep": 87}, "2026-04-13": {"deep_sleep": 90, "efficiency": 79, "latency": 81, "rem_sleep": 86, "restfulness": 64, "timing": 100, "total_sleep": 79}, "2026-04-14": {"deep_sleep": 91, "efficiency": 95, "latency": 64, "rem_sleep": 99, "restfulness": 77, "timing": 100, "total_sleep": 81}, "2026-04-15": {"deep_sleep": 84, "efficiency": 96, "latency": 89, "rem_sleep": 90, "restfulness": 58, "timing": 100, "total_sleep": 86}, "2026-04-16": {"deep_sleep": 87, "efficiency": 83, "latency": 67, "rem_sleep": 62, "restfulness": 51, "timing": 100, "total_sleep": 76}, "2026-04-17": {"deep_sleep": 76, "efficiency": 95, "latency": 91, "rem_sleep": 85, "restfulness": 65, "timing": 100, "total_sleep": 84}, "2026-04-18": {"deep_sleep": 81, "efficiency": 98, "latency": 97, "rem_sleep": 73, "restfulness": 86, "timing": 100, "total_sleep": 64}, "2026-04-19": {"deep_sleep": 66, "efficiency": 79, "latency": 86, "rem_sleep": 36, "restfulness": 71, "timing": 100, "total_sleep": 52}, "2026-04-20": {"deep_sleep": 96, "efficiency": 86, "latency": 62, "rem_sleep": 84, "restfulness": 59, "timing": 98, "total_sleep": 77}, "2026-04-21": {"deep_sleep": 72, "efficiency": 98, "latency": 81, "rem_sleep": 95, "restfulness": 82, "timing": 100, "total_sleep": 73}, "2026-04-22": {"deep_sleep": 76, "efficiency": 93, "latency": 75, "rem_sleep": 96, "restfulness": 73, "timing": 100, "total_sleep": 83}, "2026-04-23": {"deep_sleep": 85, "efficiency": 93, "latency": 64, "rem_sleep": 99, "restfulness": 79, "timing": 100, "total_sleep": 80}, "2026-04-24": {"deep_sleep": 72, "efficiency": 74, "latency": 75, "rem_sleep": 64, "restfulness": 76, "timing": 100, "total_sleep": 78}, "2026-04-25": {"deep_sleep": 95, "efficiency": 74, "latency": 67, "rem_sleep": 80, "restfulness": 65, "timing": 100, "total_sleep": 78}, "2026-04-26": {"deep_sleep": 95, "efficiency": 74, "latency": 46, "rem_sleep": 90, "restfulness": 45, "timing": 94, "total_sleep": 95}, "2026-04-27": {"deep_sleep": 83, "efficiency": 90, "latency": 75, "rem_sleep": 87, "restfulness": 69, "timing": 100, "total_sleep": 80}, "2026-04-28": {"deep_sleep": 96, "efficiency": 93, "latency": 81, "rem_sleep": 92, "restfulness": 64, "timing": 100, "total_sleep": 84}, "2026-04-29": {"deep_sleep": 95, "efficiency": 95, "latency": 67, "rem_sleep": 98, "restfulness": 62, "timing": 100, "total_sleep": 82}, "2026-04-30": {"deep_sleep": 96, "efficiency": 96, "latency": 97, "rem_sleep": 95, "restfulness": 82, "timing": 100, "total_sleep": 86}, "2026-05-01": {"deep_sleep": 95, "efficiency": 83, "latency": 86, "rem_sleep": 92, "restfulness": 64, "timing": 100, "total_sleep": 88}, "2026-05-02": {"deep_sleep": 76, "efficiency": 76, "latency": 18, "rem_sleep": 75, "restfulness": 53, "timing": 100, "total_sleep": 78}, "2026-05-03": {"deep_sleep": 81, "efficiency": 93, "latency": 86, "rem_sleep": 95, "restfulness": 78, "timing": 69, "total_sleep": 80}, "2026-05-04": {"deep_sleep": 96, "efficiency": 72, "latency": 75, "rem_sleep": 78, "restfulness": 51, "timing": 89, "total_sleep": 83}, "2026-05-05": {"deep_sleep": 43, "efficiency": 69, "latency": 48, "rem_sleep": 49, "restfulness": 72, "timing": 100, "total_sleep": 65}, "2026-05-06": {"deep_sleep": 70, "efficiency": 79, "latency": 72, "rem_sleep": 99, "restfulness": 64, "timing": 98, "total_sleep": 84}, "2026-05-07": {"deep_sleep": 96, "efficiency": 74, "latency": 67, "rem_sleep": 78, "restfulness": 55, "timing": 100, "total_sleep": 83}, "2026-05-08": {"deep_sleep": 96, "efficiency": 86, "latency": 91, "rem_sleep": 80, "restfulness": 67, "timing": 100, "total_sleep": 92}, "2026-05-10": {"deep_sleep": 95, "efficiency": 79, "latency": 94, "rem_sleep": 98, "restfulness": 68, "timing": 100, "total_sleep": 89}, "2026-05-11": {"deep_sleep": 86, "efficiency": 69, "latency": 27, "rem_sleep": 83, "restfulness": 57, "timing": 100, "total_sleep": 79}, "2026-05-12": {"deep_sleep": 96, "efficiency": 90, "latency": 78, "rem_sleep": 99, "restfulness": 85, "timing": 100, "total_sleep": 87}, "2026-05-13": {"deep_sleep": 64, "efficiency": 79, "latency": 91, "rem_sleep": 67, "restfulness": 59, "timing": 100, "total_sleep": 79}, "2026-05-14": {"deep_sleep": 87, "efficiency": 74, "latency": 99, "rem_sleep": 75, "restfulness": 60, "timing": 100, "total_sleep": 78}, "2026-05-15": {"deep_sleep": 88, "efficiency": 83, "latency": 70, "rem_sleep": 84, "restfulness": 50, "timing": 100, "total_sleep": 83}, "2026-05-16": {"deep_sleep": 85, "efficiency": 95, "latency": 70, "rem_sleep": 91, "restfulness": 67, "timing": 100, "total_sleep": 86}, "2026-05-17": {"deep_sleep": 83, "efficiency": 88, "latency": 91, "rem_sleep": 80, "restfulness": 77, "timing": 100, "total_sleep": 85}, "2026-05-18": {"deep_sleep": 78, "efficiency": 81, "latency": 67, "rem_sleep": 45, "restfulness": 51, "timing": 63, "total_sleep": 45}, "2026-05-19": {"deep_sleep": 95, "efficiency": 69, "latency": 81, "rem_sleep": 98, "restfulness": 60, "timing": 100, "total_sleep": 84}, "2026-05-20": {"deep_sleep": 73, "efficiency": 81, "latency": 72, "rem_sleep": 85, "restfulness": 71, "timing": 100, "total_sleep": 73}, "2026-05-21": {"deep_sleep": 74, "efficiency": 74, "latency": 67, "rem_sleep": 68, "restfulness": 73, "timing": 100, "total_sleep": 78}, "2026-05-22": {"deep_sleep": 91, "efficiency": 83, "latency": 91, "rem_sleep": 73, "restfulness": 75, "timing": 98, "total_sleep": 78}, "2026-05-23": {"deep_sleep": 84, "efficiency": 81, "latency": 86, "rem_sleep": 96, "restfulness": 59, "timing": 95, "total_sleep": 87}, "2026-05-24": {"deep_sleep": 80, "efficiency": 86, "latency": 81, "rem_sleep": 80, "restfulness": 45, "timing": 100, "total_sleep": 76}, "2026-05-25": {"deep_sleep": 91, "efficiency": 90, "latency": 75, "rem_sleep": 89, "restfulness": 71, "timing": 98, "total_sleep": 83}, "2026-05-26": {"deep_sleep": 96, "efficiency": 69, "latency": 91, "rem_sleep": 58, "restfulness": 68, "timing": 25, "total_sleep": 52}, "2026-05-27": {"deep_sleep": 91, "efficiency": 79, "latency": 54, "rem_sleep": 92, "restfulness": 77, "timing": 77, "total_sleep": 92}, "2026-05-29": {"deep_sleep": 97, "efficiency": 76, "latency": 46, "rem_sleep": 96, "restfulness": 44, "timing": 60, "total_sleep": 94}, "2026-05-30": {"deep_sleep": 58, "efficiency": 83, "latency": 94, "rem_sleep": 68, "restfulness": 62, "timing": 19, "total_sleep": 54}, "2026-05-31": {"deep_sleep": 94, "efficiency": 83, "latency": 22, "rem_sleep": 96, "restfulness": 72, "timing": 51, "total_sleep": 95}, "2026-06-01": {"deep_sleep": 81, "efficiency": 67, "latency": 32, "rem_sleep": 80, "restfulness": 52, "timing": 55, "total_sleep": 64}, "2026-06-02": {"deep_sleep": 82, "efficiency": 96, "latency": 70, "rem_sleep": 87, "restfulness": 78, "timing": 77, "total_sleep": 81}, "2026-06-03": {"deep_sleep": 76, "efficiency": 74, "latency": 97, "rem_sleep": 95, "restfulness": 61, "timing": 90, "total_sleep": 91}, "2026-06-04": {"deep_sleep": 73, "efficiency": 67, "latency": 54, "rem_sleep": 71, "restfulness": 48, "timing": 98, "total_sleep": 79}, "2026-06-05": {"deep_sleep": 92, "efficiency": 58, "latency": 9, "rem_sleep": 76, "restfulness": 62, "timing": 94, "total_sleep": 81}, "2026-06-06": {"deep_sleep": 86, "efficiency": 86, "latency": 70, "rem_sleep": 80, "restfulness": 55, "timing": 100, "total_sleep": 76}, "2026-06-08": {"deep_sleep": 75, "efficiency": 83, "latency": 17, "rem_sleep": 99, "restfulness": 82, "timing": 100, "total_sleep": 87}, "2026-06-09": {"deep_sleep": 78, "efficiency": 62, "latency": 86, "rem_sleep": 87, "restfulness": 66, "timing": 93, "total_sleep": 76}, "2026-06-10": {"deep_sleep": 96, "efficiency": 72, "latency": 94, "rem_sleep": 87, "restfulness": 55, "timing": 76, "total_sleep": 82}, "2026-06-11": {"deep_sleep": 96, "efficiency": 93, "latency": 81, "rem_sleep": 89, "restfulness": 84, "timing": 68, "total_sleep": 70}, "2026-06-12": {"deep_sleep": 81, "efficiency": 79, "latency": 24, "rem_sleep": 67, "restfulness": 78, "timing": 100, "total_sleep": 59}, "2026-06-15": {"deep_sleep": 64, "efficiency": 79, "latency": 91, "rem_sleep": 59, "restfulness": 75, "timing": 90, "total_sleep": 42}, "2026-06-16": {"deep_sleep": 52, "efficiency": 39, "latency": 67, "rem_sleep": 24, "restfulness": 41, "timing": 97, "total_sleep": 25}, "2026-06-17": {"deep_sleep": 91, "efficiency": 81, "latency": 89, "rem_sleep": 63, "restfulness": 71, "timing": 36, "total_sleep": 70}, "2026-06-18": {"deep_sleep": 65, "efficiency": 58, "latency": 62, "rem_sleep": 80, "restfulness": 61, "timing": 64, "total_sleep": 83}, "2026-06-20": {"deep_sleep": 68, "efficiency": 67, "latency": 32, "rem_sleep": 64, "restfulness": 55, "timing": 79, "total_sleep": 71}, "2026-06-21": {"deep_sleep": 79, "efficiency": 90, "latency": 89, "rem_sleep": 85, "restfulness": 71, "timing": 97, "total_sleep": 95}, "2026-06-22": {"deep_sleep": 83, "efficiency": 65, "latency": 14, "rem_sleep": 87, "restfulness": 69, "timing": 90, "total_sleep": 78}, "2026-06-23": {"deep_sleep": 98, "efficiency": 62, "latency": 7, "rem_sleep": 89, "restfulness": 57, "timing": 86, "total_sleep": 84}, "2026-06-24": {"deep_sleep": 70, "efficiency": 93, "latency": 89, "rem_sleep": 95, "restfulness": 67, "timing": 64, "total_sleep": 80}, "2026-06-25": {"deep_sleep": 96, "efficiency": 88, "latency": 91, "rem_sleep": 88, "restfulness": 77, "timing": 71, "total_sleep": 78}, "2026-06-26": {"deep_sleep": 88, "efficiency": 96, "latency": 81, "rem_sleep": 93, "restfulness": 52, "timing": 95, "total_sleep": 84}, "2026-06-27": {"deep_sleep": 71, "efficiency": 88, "latency": 89, "rem_sleep": 93, "restfulness": 56, "timing": 87, "total_sleep": 75}, "2026-06-29": {"deep_sleep": 68, "efficiency": 60, "latency": 27, "rem_sleep": 88, "restfulness": 62, "timing": 73, "total_sleep": 66}, "2026-06-30": {"deep_sleep": 80, "efficiency": 83, "latency": 70, "rem_sleep": 97, "restfulness": 70, "timing": 70, "total_sleep": 82}, "2026-07-01": {"deep_sleep": 93, "efficiency": 60, "latency": 72, "rem_sleep": 59, "restfulness": 62, "timing": 100, "total_sleep": 69}, "2026-07-02": {"deep_sleep": 78, "efficiency": 96, "latency": 70, "rem_sleep": 90, "restfulness": 65, "timing": 73, "total_sleep": 64}, "2026-07-03": {"deep_sleep": 68, "efficiency": 69, "latency": 89, "rem_sleep": 55, "restfulness": 62, "timing": 66, "total_sleep": 67}, "2026-07-04": {"deep_sleep": 92, "efficiency": 88, "latency": 81, "rem_sleep": 88, "restfulness": 78, "timing": 76, "total_sleep": 66}, "2026-07-05": {"deep_sleep": 84, "efficiency": 69, "latency": 75, "rem_sleep": 83, "restfulness": 48, "timing": 51, "total_sleep": 74}, "2026-07-06": {"deep_sleep": 96, "efficiency": 81, "latency": 94, "rem_sleep": 98, "restfulness": 75, "timing": 82, "total_sleep": 80}, "2026-07-07": {"deep_sleep": 98, "efficiency": 76, "latency": 83, "rem_sleep": 96, "restfulness": 76, "timing": 71, "total_sleep": 83}, "2026-07-08": {"deep_sleep": 83, "efficiency": 81, "latency": 19, "rem_sleep": 93, "restfulness": 49, "timing": 100, "total_sleep": 76}, "2026-07-09": {"deep_sleep": 95, "efficiency": 86, "latency": 83, "rem_sleep": 98, "restfulness": 71, "timing": 93, "total_sleep": 96}, "2026-07-10": {"deep_sleep": 84, "efficiency": 58, "latency": 46, "rem_sleep": 92, "restfulness": 43, "timing": 92, "total_sleep": 77}, "2026-07-11": {"deep_sleep": 69, "efficiency": 93, "latency": 94, "rem_sleep": 72, "restfulness": 69, "timing": 90, "total_sleep": 68}, "2026-07-12": {"deep_sleep": 91, "efficiency": 51, "latency": 89, "rem_sleep": 58, "restfulness": 41, "timing": 70, "total_sleep": 68}, "2026-07-13": {"deep_sleep": 88, "efficiency": 74, "latency": 56, "rem_sleep": 97, "restfulness": 72, "timing": 100, "total_sleep": 92}, "2026-07-14": {"deep_sleep": 64, "efficiency": 72, "latency": 70, "rem_sleep": 94, "restfulness": 58, "timing": 94, "total_sleep": 80}, "2026-07-15": {"deep_sleep": 78, "efficiency": 72, "latency": 70, "rem_sleep": 80, "restfulness": 70, "timing": 86, "total_sleep": 72}, "2026-07-16": {"deep_sleep": 96, "efficiency": 93, "latency": 78, "rem_sleep": 97, "restfulness": 75, "timing": 77, "total_sleep": 82}, "2026-07-17": {"deep_sleep": 82, "efficiency": 95, "latency": 97, "rem_sleep": 82, "restfulness": 68, "timing": 80, "total_sleep": 80}, "2026-07-18": {"deep_sleep": 64, "efficiency": 55, "latency": 16, "rem_sleep": 64, "restfulness": 53, "timing": 100, "total_sleep": 46}}, "ready_contrib": {"2026-04-10": {"activity_balance": 48, "body_temperature": 100, "hrv_balance": 88, "previous_day_activity": 49, "previous_night": 90, "recovery_index": 100, "resting_heart_rate": 100, "sleep_balance": 75, "sleep_regularity": 88}, "2026-04-11": {"activity_balance": 59, "body_temperature": 98, "hrv_balance": 87, "previous_day_activity": 60, "previous_night": 74, "recovery_index": 91, "resting_heart_rate": 93, "sleep_balance": 76, "sleep_regularity": 90}, "2026-04-12": {"activity_balance": 56, "body_temperature": 89, "hrv_balance": 88, "previous_day_activity": 62, "previous_night": 87, "recovery_index": 100, "resting_heart_rate": 99, "sleep_balance": 84, "sleep_regularity": 91}, "2026-04-13": {"activity_balance": 68, "body_temperature": 88, "hrv_balance": 88, "previous_day_activity": 91, "previous_night": 85, "recovery_index": 99, "resting_heart_rate": 90, "sleep_balance": 79, "sleep_regularity": 90}, "2026-04-14": {"activity_balance": 52, "body_temperature": 100, "hrv_balance": 87, "previous_day_activity": 69, "previous_night": 92, "recovery_index": 89, "resting_heart_rate": 100, "sleep_balance": 84, "sleep_regularity": 91}, "2026-04-15": {"activity_balance": 70, "body_temperature": 100, "hrv_balance": 87, "previous_day_activity": 91, "previous_night": 92, "recovery_index": 89, "resting_heart_rate": 97, "sleep_balance": 85, "sleep_regularity": 90}, "2026-04-16": {"activity_balance": 64, "body_temperature": 90, "hrv_balance": 86, "previous_day_activity": 76, "previous_night": 71, "recovery_index": 26, "resting_heart_rate": 100, "sleep_balance": 82, "sleep_regularity": 91}, "2026-04-17": {"activity_balance": 74, "body_temperature": 99, "hrv_balance": 86, "previous_day_activity": 100, "previous_night": 91, "recovery_index": 92, "resting_heart_rate": 94, "sleep_balance": 89, "sleep_regularity": 91}, "2026-04-18": {"activity_balance": 74, "body_temperature": 49, "hrv_balance": 85, "previous_day_activity": 100, "previous_night": 83, "recovery_index": 58, "resting_heart_rate": 38, "sleep_balance": 80, "sleep_regularity": 90}, "2026-04-19": {"activity_balance": 65, "body_temperature": 73, "hrv_balance": 85, "previous_day_activity": 59, "previous_night": 56, "recovery_index": 38, "resting_heart_rate": 100, "sleep_balance": 79, "sleep_regularity": 89}, "2026-04-20": {"activity_balance": 90, "body_temperature": 94, "hrv_balance": 84, "previous_day_activity": 100, "previous_night": 79, "recovery_index": 100, "resting_heart_rate": 100, "sleep_balance": 82, "sleep_regularity": 88}, "2026-04-21": {"activity_balance": 69, "body_temperature": 100, "hrv_balance": 83, "previous_day_activity": 71, "previous_night": 87, "recovery_index": 84, "resting_heart_rate": 100, "sleep_balance": 72, "sleep_regularity": 89}, "2026-04-22": {"activity_balance": 75, "body_temperature": 90, "hrv_balance": 82, "previous_day_activity": 50, "previous_night": 91, "recovery_index": 100, "resting_heart_rate": 100, "sleep_balance": 76, "sleep_regularity": 89}, "2026-04-23": {"activity_balance": 79, "body_temperature": 91, "hrv_balance": 85, "previous_day_activity": 85, "previous_night": 91, "recovery_index": 98, "resting_heart_rate": 100, "sleep_balance": 74, "sleep_regularity": 89}, "2026-04-24": {"activity_balance": 72, "body_temperature": 88, "hrv_balance": 82, "previous_day_activity": 86, "previous_night": 77, "recovery_index": 42, "resting_heart_rate": 91, "sleep_balance": 76, "sleep_regularity": 89}, "2026-04-25": {"activity_balance": 66, "body_temperature": 67, "hrv_balance": 86, "previous_day_activity": 68, "previous_night": 81, "recovery_index": 100, "resting_heart_rate": 82, "sleep_balance": 78, "sleep_regularity": 90}, "2026-04-26": {"activity_balance": 68, "body_temperature": 83, "hrv_balance": 86, "previous_day_activity": 68, "previous_night": 83, "recovery_index": 100, "resting_heart_rate": 100, "sleep_balance": 85, "sleep_regularity": 90}, "2026-04-27": {"activity_balance": 76, "body_temperature": 98, "hrv_balance": 86, "previous_day_activity": 100, "previous_night": 87, "recovery_index": 80, "resting_heart_rate": 100, "sleep_balance": 81, "sleep_regularity": 88}, "2026-04-28": {"activity_balance": 57, "body_temperature": 88, "hrv_balance": 88, "previous_day_activity": 63, "previous_night": 94, "recovery_index": 91, "resting_heart_rate": 100, "sleep_balance": 88, "sleep_regularity": 88}, "2026-04-29": {"activity_balance": 70, "body_temperature": 100, "hrv_balance": 88, "previous_day_activity": 75, "previous_night": 89, "recovery_index": 100, "resting_heart_rate": 100, "sleep_balance": 87, "sleep_regularity": 88}, "2026-04-30": {"activity_balance": 63, "body_temperature": 95, "hrv_balance": 89, "previous_day_activity": 71, "previous_night": 100, "recovery_index": 84, "resting_heart_rate": 100, "sleep_balance": 91, "sleep_regularity": 89}, "2026-05-01": {"activity_balance": 75, "body_temperature": 100, "hrv_balance": 90, "previous_day_activity": 100, "previous_night": 95, "recovery_index": 100, "resting_heart_rate": 97, "sleep_balance": 92, "sleep_regularity": 89}, "2026-05-02": {"activity_balance": 65, "body_temperature": 100, "hrv_balance": 90, "previous_day_activity": 90, "previous_night": 61, "recovery_index": 100, "resting_heart_rate": 100, "sleep_balance": 89, "sleep_regularity": 90}, "2026-05-03": {"activity_balance": 75, "body_temperature": 80, "hrv_balance": 91, "previous_day_activity": 94, "previous_night": 87, "recovery_index": 90, "resting_heart_rate": 97, "sleep_balance": 93, "sleep_regularity": 92}, "2026-05-04": {"activity_balance": 70, "body_temperature": 100, "hrv_balance": 90, "previous_day_activity": 68, "previous_night": 78, "recovery_index": 100, "resting_heart_rate": 100, "sleep_balance": 92, "sleep_regularity": 89}, "2026-05-05": {"activity_balance": 75, "body_temperature": 96, "hrv_balance": 91, "previous_day_activity": 73, "previous_night": 48, "recovery_index": 78, "resting_heart_rate": 100, "sleep_balance": 85, "sleep_regularity": 89}, "2026-05-06": {"activity_balance": 68, "body_temperature": 73, "hrv_balance": 90, "previous_day_activity": 60, "previous_night": 85, "recovery_index": 100, "resting_heart_rate": 100, "sleep_balance": 93, "sleep_regularity": 89}, "2026-05-07": {"activity_balance": 70, "body_temperature": 100, "hrv_balance": 90, "previous_day_activity": 84, "previous_night": 81, "recovery_index": 64, "resting_heart_rate": 100, "sleep_balance": 85, "sleep_regularity": 89}, "2026-05-11": {"activity_balance": 73, "body_temperature": 87, "hrv_balance": 90, "previous_day_activity": 96, "previous_night": 66, "recovery_index": 100, "resting_heart_rate": 97, "sleep_balance": 88, "sleep_regularity": 90}, "2026-05-12": {"activity_balance": 61, "body_temperature": 90, "hrv_balance": 90, "previous_day_activity": 76, "previous_night": 100, "recovery_index": 95, "resting_heart_rate": 100, "sleep_balance": 95, "sleep_regularity": 90}, "2026-05-13": {"activity_balance": 71, "body_temperature": 89, "hrv_balance": 89, "previous_day_activity": 87, "previous_night": 75, "recovery_index": 99, "resting_heart_rate": 88, "sleep_balance": 90, "sleep_regularity": 91}, "2026-05-14": {"activity_balance": 69, "body_temperature": 100, "hrv_balance": 89, "previous_day_activity": 78, "previous_night": 82, "recovery_index": 51, "resting_heart_rate": 88, "sleep_balance": 90, "sleep_regularity": 91}, "2026-05-15": {"activity_balance": 73, "body_temperature": 97, "hrv_balance": 89, "previous_day_activity": 92, "previous_night": 80, "recovery_index": 81, "resting_heart_rate": 100, "sleep_balance": 91, "sleep_regularity": 91}, "2026-05-16": {"activity_balance": 74, "body_temperature": 100, "hrv_balance": 88, "previous_day_activity": 89, "previous_night": 92, "recovery_index": 94, "resting_heart_rate": 100, "sleep_balance": 90, "sleep_regularity": 93}, "2026-05-17": {"activity_balance": 77, "body_temperature": 57, "hrv_balance": 88, "previous_day_activity": 95, "previous_night": 94, "recovery_index": 100, "resting_heart_rate": 100, "sleep_balance": 89, "sleep_regularity": 93}, "2026-05-18": {"activity_balance": 81, "body_temperature": 73, "hrv_balance": 88, "previous_day_activity": 86, "previous_night": 30, "recovery_index": 27, "resting_heart_rate": 97, "sleep_balance": 74, "sleep_regularity": 95}, "2026-05-19": {"activity_balance": 86, "body_temperature": 94, "hrv_balance": 86, "previous_day_activity": 100, "previous_night": 89, "recovery_index": 100, "resting_heart_rate": 100, "sleep_balance": 92, "sleep_regularity": 89}, "2026-05-21": {"activity_balance": 84, "body_temperature": 100, "hrv_balance": 85, "previous_day_activity": 77, "previous_night": 76, "recovery_index": 90, "resting_heart_rate": 100, "sleep_balance": 77, "sleep_regularity": 90}, "2026-05-22": {"activity_balance": 91, "body_temperature": 95, "hrv_balance": 85, "previous_day_activity": 88, "previous_night": 87, "recovery_index": 89, "resting_heart_rate": 100, "sleep_balance": 75, "sleep_regularity": 90}, "2026-05-23": {"activity_balance": 84, "body_temperature": 100, "hrv_balance": 82, "previous_day_activity": 82, "previous_night": 92, "recovery_index": 100, "resting_heart_rate": 100, "sleep_balance": 78, "sleep_regularity": 90}, "2026-05-24": {"activity_balance": 87, "body_temperature": 82, "hrv_balance": 84, "previous_day_activity": 91, "previous_night": 73, "recovery_index": 93, "resting_heart_rate": 100, "sleep_balance": 74, "sleep_regularity": 91}, "2026-05-25": {"activity_balance": 87, "body_temperature": 100, "hrv_balance": 80, "previous_day_activity": 87, "previous_night": 92, "recovery_index": 81, "resting_heart_rate": 100, "sleep_balance": 81, "sleep_regularity": 91}, "2026-05-26": {"activity_balance": 87, "body_temperature": 94, "hrv_balance": 79, "previous_day_activity": 78, "previous_night": 41, "recovery_index": 23, "resting_heart_rate": 100, "sleep_balance": 68, "sleep_regularity": 92}, "2026-05-27": {"activity_balance": 90, "body_temperature": 97, "hrv_balance": 82, "previous_day_activity": 100, "previous_night": 90, "recovery_index": 100, "resting_heart_rate": 97, "sleep_balance": 87, "sleep_regularity": 92}, "2026-05-31": {"activity_balance": 95, "body_temperature": 78, "hrv_balance": 71, "previous_day_activity": 100, "previous_night": 81, "recovery_index": 71, "resting_heart_rate": 61, "sleep_balance": 92, "sleep_regularity": 78}, "2026-06-01": {"activity_balance": 97, "body_temperature": 100, "hrv_balance": 80, "previous_day_activity": 100, "previous_night": 41, "recovery_index": 75, "resting_heart_rate": 99, "sleep_balance": 66, "sleep_regularity": 79}, "2026-06-02": {"activity_balance": 99, "body_temperature": 63, "hrv_balance": 76, "previous_day_activity": 100, "previous_night": 86, "recovery_index": 74, "resting_heart_rate": 100, "sleep_balance": 83, "sleep_regularity": 80}, "2026-06-03": {"activity_balance": 95, "body_temperature": 100, "hrv_balance": 75, "previous_day_activity": 100, "previous_night": 93, "recovery_index": 100, "resting_heart_rate": 89, "sleep_balance": 81, "sleep_regularity": 80}, "2026-06-04": {"activity_balance": 100, "body_temperature": 89, "hrv_balance": 69, "previous_day_activity": 82, "previous_night": 61, "recovery_index": 92, "resting_heart_rate": 70, "sleep_balance": 76, "sleep_regularity": 80}, "2026-06-05": {"activity_balance": 93, "body_temperature": 93, "hrv_balance": 79, "previous_day_activity": 89, "previous_night": 62, "recovery_index": 99, "resting_heart_rate": 89, "sleep_balance": 82, "sleep_regularity": 80}, "2026-06-06": {"activity_balance": 97, "body_temperature": 100, "hrv_balance": 70, "previous_day_activity": 95, "previous_night": 77, "recovery_index": 83, "resting_heart_rate": 61, "sleep_balance": 80, "sleep_regularity": 83}, "2026-06-08": {"activity_balance": 98, "body_temperature": 91, "hrv_balance": 72, "previous_day_activity": 88, "previous_night": 84, "recovery_index": 89, "resting_heart_rate": 90, "sleep_balance": 84, "sleep_regularity": 83}, "2026-06-09": {"activity_balance": 99, "body_temperature": 97, "hrv_balance": 75, "previous_day_activity": 100, "previous_night": 77, "recovery_index": 99, "resting_heart_rate": 99, "sleep_balance": 80, "sleep_regularity": 83}, "2026-06-10": {"activity_balance": 98, "body_temperature": 74, "hrv_balance": 76, "previous_day_activity": 94, "previous_night": 85, "recovery_index": 100, "resting_heart_rate": 100, "sleep_balance": 86, "sleep_regularity": 81}, "2026-06-11": {"activity_balance": 95, "body_temperature": 70, "hrv_balance": 77, "previous_day_activity": 95, "previous_night": 85, "recovery_index": 57, "resting_heart_rate": 89, "sleep_balance": 78, "sleep_regularity": 84}, "2026-06-12": {"activity_balance": 95, "body_temperature": 83, "hrv_balance": 84, "previous_day_activity": 100, "previous_night": 52, "recovery_index": 80, "resting_heart_rate": 100, "sleep_balance": 75, "sleep_regularity": 84}, "2026-06-16": {"activity_balance": 98, "body_temperature": 99, "hrv_balance": 85, "previous_day_activity": 88, "previous_night": 1, "recovery_index": 41, "resting_heart_rate": 61, "sleep_balance": 37, "sleep_regularity": 80}, "2026-06-17": {"activity_balance": 99, "body_temperature": 100, "hrv_balance": 71, "previous_day_activity": 100, "previous_night": 63, "recovery_index": 88, "resting_heart_rate": 62, "sleep_balance": 46, "sleep_regularity": 73}, "2026-06-18": {"activity_balance": 97, "body_temperature": 56, "hrv_balance": 79, "previous_day_activity": 100, "previous_night": 63, "recovery_index": 38, "resting_heart_rate": 91, "sleep_balance": 31, "sleep_regularity": 64}, "2026-06-20": {"activity_balance": 98, "body_temperature": 93, "hrv_balance": 77, "previous_day_activity": 75, "previous_night": 45, "recovery_index": 93, "resting_heart_rate": 82, "sleep_balance": 26, "sleep_regularity": 65}, "2026-06-21": {"activity_balance": 100, "body_temperature": 82, "hrv_balance": 64, "previous_day_activity": 82, "previous_night": 100, "recovery_index": 68, "resting_heart_rate": 73, "sleep_balance": 40, "sleep_regularity": 65}, "2026-06-22": {"activity_balance": 99, "body_temperature": 75, "hrv_balance": 80, "previous_day_activity": 87, "previous_night": 64, "recovery_index": 100, "resting_heart_rate": 73, "sleep_balance": 38, "sleep_regularity": 65}, "2026-06-23": {"activity_balance": 91, "body_temperature": 60, "hrv_balance": 71, "previous_day_activity": 79, "previous_night": 65, "recovery_index": 100, "resting_heart_rate": 73, "sleep_balance": 60, "sleep_regularity": 71}, "2026-06-24": {"activity_balance": 93, "body_temperature": 100, "hrv_balance": 66, "previous_day_activity": 79, "previous_night": 83, "recovery_index": 80, "resting_heart_rate": 73, "sleep_balance": 64, "sleep_regularity": 72}, "2026-06-25": {"activity_balance": 89, "body_temperature": 100, "hrv_balance": 76, "previous_day_activity": 83, "previous_night": 90, "recovery_index": 90, "resting_heart_rate": 63, "sleep_balance": 71, "sleep_regularity": 76}, "2026-06-26": {"activity_balance": 86, "body_temperature": 87, "hrv_balance": 73, "previous_day_activity": 71, "previous_night": 92, "recovery_index": 90, "resting_heart_rate": 83, "sleep_balance": 77, "sleep_regularity": 76}, "2026-06-29": {"activity_balance": 86, "body_temperature": 100, "hrv_balance": 82, "previous_day_activity": 85, "previous_night": 45, "recovery_index": 100, "resting_heart_rate": 83, "sleep_balance": 76, "sleep_regularity": 82}, "2026-07-01": {"activity_balance": 77, "body_temperature": 99, "hrv_balance": 78, "previous_day_activity": 82, "previous_night": 65, "recovery_index": 96, "resting_heart_rate": 74, "sleep_balance": 73, "sleep_regularity": 90}, "2026-07-02": {"activity_balance": 78, "body_temperature": 97, "hrv_balance": 85, "previous_day_activity": 95, "previous_night": 68, "recovery_index": 53, "resting_heart_rate": 83, "sleep_balance": 74, "sleep_regularity": 91}, "2026-07-03": {"activity_balance": 67, "body_temperature": 100, "hrv_balance": 79, "previous_day_activity": 64, "previous_night": 53, "recovery_index": 84, "resting_heart_rate": 92, "sleep_balance": 72, "sleep_regularity": 90}, "2026-07-04": {"activity_balance": 80, "body_temperature": 100, "hrv_balance": 82, "previous_day_activity": 80, "previous_night": 78, "recovery_index": 80, "resting_heart_rate": 92, "sleep_balance": 67, "sleep_regularity": 90}, "2026-07-05": {"activity_balance": 71, "body_temperature": 78, "hrv_balance": 72, "previous_day_activity": 54, "previous_night": 58, "recovery_index": 38, "resting_heart_rate": 55, "sleep_balance": 68, "sleep_regularity": 90}, "2026-07-06": {"activity_balance": 78, "body_temperature": 95, "hrv_balance": 85, "previous_day_activity": 80, "previous_night": 95, "recovery_index": 100, "resting_heart_rate": 84, "sleep_balance": 67, "sleep_regularity": 89}, "2026-07-07": {"activity_balance": 68, "body_temperature": 88, "hrv_balance": 77, "previous_day_activity": 71, "previous_night": 92, "recovery_index": 92, "resting_heart_rate": 93, "sleep_balance": 69, "sleep_regularity": 89}, "2026-07-08": {"activity_balance": 75, "body_temperature": 91, "hrv_balance": 79, "previous_day_activity": 79, "previous_night": 64, "recovery_index": 61, "resting_heart_rate": 93, "sleep_balance": 69, "sleep_regularity": 89}, "2026-07-09": {"activity_balance": 66, "body_temperature": 96, "hrv_balance": 82, "previous_day_activity": 58, "previous_night": 100, "recovery_index": 100, "resting_heart_rate": 93, "sleep_balance": 82, "sleep_regularity": 86}, "2026-07-10": {"activity_balance": 77, "body_temperature": 84, "hrv_balance": 85, "previous_day_activity": 100, "previous_night": 62, "recovery_index": 87, "resting_heart_rate": 93, "sleep_balance": 75, "sleep_regularity": 86}, "2026-07-11": {"activity_balance": 64, "body_temperature": 82, "hrv_balance": 87, "previous_day_activity": 61, "previous_night": 75, "recovery_index": 50, "resting_heart_rate": 100, "sleep_balance": 81, "sleep_regularity": 86}, "2026-07-12": {"activity_balance": 70, "body_temperature": 85, "hrv_balance": 86, "previous_day_activity": 58, "previous_night": 50, "recovery_index": 41, "resting_heart_rate": 93, "sleep_balance": 81, "sleep_regularity": 86}, "2026-07-14": {"activity_balance": 68, "body_temperature": 100, "hrv_balance": 88, "previous_day_activity": 77, "previous_night": 75, "recovery_index": 78, "resting_heart_rate": 93, "sleep_balance": 79, "sleep_regularity": 84}, "2026-07-15": {"activity_balance": 70, "body_temperature": 73, "hrv_balance": 88, "previous_day_activity": 76, "previous_night": 70, "recovery_index": 75, "resting_heart_rate": 100, "sleep_balance": 82, "sleep_regularity": 86}, "2026-07-16": {"activity_balance": 72, "body_temperature": 100, "hrv_balance": 88, "previous_day_activity": 92, "previous_night": 95, "recovery_index": 78, "resting_heart_rate": 84, "sleep_balance": 87, "sleep_regularity": 86}, "2026-07-17": {"activity_balance": 65, "body_temperature": 100, "hrv_balance": 87, "previous_day_activity": 66, "previous_night": 90, "recovery_index": 82, "resting_heart_rate": 75, "sleep_balance": 84, "sleep_regularity": 88}, "2026-07-18": {"activity_balance": 76, "body_temperature": 86, "hrv_balance": 88, "previous_day_activity": 83, "previous_night": 20, "recovery_index": 56, "resting_heart_rate": 84, "sleep_balance": 72, "sleep_regularity": 88}}, "planned": {"2026-07-13": 87, "2026-07-20": 90, "2026-07-27": 84, "2026-08-03": 100, "2026-08-10": 100, "2026-08-17": 91}}</script>
+<script type="application/json" id="snapplan">{"2026-07-27": {"mi": 18, "hard": 1, "items": [{"tag": "Session", "name": "Double Threshold: 2K / 500s", "det": "Two blocks. The second one is the session.", "vol": "18 mi"}, {"tag": "Strength", "name": "Weight Room", "det": "35 min, quality over volume", "vol": ""}]}, "2026-07-28": {"mi": 10, "items": [{"tag": "Aerobic", "name": "Aerobic Run", "det": "Easy. Heart rate is the governor, not pace.", "vol": "10 mi"}, {"tag": "Core", "name": "Kaboom Core 1.0", "det": "", "vol": ""}]}, "2026-07-29": {"mi": 15, "items": [{"tag": "Double", "name": "Double + Strides", "det": "Split am/pm. 6\u00d720s strides on the second run.", "vol": "15 mi"}]}, "2026-07-30": {"mi": 10, "hard": 1, "items": [{"tag": "Session", "name": "Tempo Run", "det": "6 mile tempo inside a 10 mile day.", "vol": "10 mi"}, {"tag": "Strength", "name": "Weight Room", "det": "35 min, quality over volume", "vol": ""}]}, "2026-07-31": {"mi": 15, "items": [{"tag": "Double", "name": "Double", "det": "Both easy.", "vol": "15 mi"}]}, "2026-08-01": {"mi": 16, "hard": 1, "items": [{"tag": "Long", "name": "Long Run", "det": "Finish the last 3 miles stronger than the first.", "vol": "16 mi"}, {"tag": "Core", "name": "P90X Abs", "det": "", "vol": ""}]}, "2026-08-02": {"mi": 0, "rest": 1, "items": [{"tag": "Rest", "name": "Rest Day", "det": "Full day off running.", "vol": ""}, {"tag": "Mobility", "name": "Runners Yoga w/ Esther", "det": "20 min", "vol": ""}]}, "2026-08-03": {"mi": 18, "hard": 1, "items": [{"tag": "Session", "name": "Double Threshold: 1K / 400s", "det": "First 100 mile week \u2014 start it conservatively.", "vol": "18 mi"}, {"tag": "Strength", "name": "Weight Room", "det": "35 min, quality over volume", "vol": ""}]}, "2026-08-04": {"mi": 10, "items": [{"tag": "Aerobic", "name": "Aerobic Run", "det": "", "vol": "10 mi"}, {"tag": "Core", "name": "Kaboom Core 1.0", "det": "", "vol": ""}]}, "2026-08-05": {"mi": 15, "items": [{"tag": "Double", "name": "Double + Strides", "det": "", "vol": "15 mi"}]}, "2026-08-06": {"mi": 15, "hard": 1, "items": [{"tag": "Session", "name": "Hills: 20 \u00d7 200 m", "det": "Plus a 5 mile aerobic run.", "vol": "15 mi"}, {"tag": "Strength", "name": "Weight Room", "det": "35 min, quality over volume", "vol": ""}]}, "2026-08-07": {"mi": 15, "items": [{"tag": "Double", "name": "Double", "det": "", "vol": "15 mi"}]}, "2026-08-08": {"mi": 12, "hard": 1, "items": [{"tag": "Session", "name": "Threshold: 2 \u00d7 4 miles w/ 3 min", "det": "", "vol": "12 mi"}, {"tag": "Core", "name": "Total Core / Abs", "det": "15 min", "vol": ""}]}, "2026-08-09": {"mi": 15, "items": [{"tag": "Double", "name": "Double", "det": "", "vol": "15 mi"}, {"tag": "Mobility", "name": "Runners Yoga w/ Esther", "det": "", "vol": ""}]}, "2026-08-10": {"mi": 18, "hard": 1, "items": [{"tag": "Session", "name": "Double Threshold: 1K / 400", "det": "Last quality day fully at altitude.", "vol": "18 mi"}, {"tag": "Strength", "name": "Weight Room", "det": "35 min, quality over volume", "vol": ""}]}, "2026-08-11": {"mi": 10, "items": [{"tag": "Aerobic", "name": "Aerobic Run", "det": "", "vol": "10 mi"}, {"tag": "Core", "name": "Kaboom Core 1.0", "det": "", "vol": ""}]}, "2026-08-12": {"mi": 15, "items": [{"tag": "Double", "name": "Double + Strides", "det": "Consider moving Thursday hills here \u2014 see the crossing.", "vol": "15 mi"}]}, "2026-08-13": {"mi": 0, "hard": 1, "items": [{"tag": "Travel", "name": "Flight to the US", "det": "24 hours in transit. Hills as written will not survive this day.", "vol": "\u2014"}, {"tag": "Note", "name": "Set your watch to US time at the gate", "det": "", "vol": ""}]}, "2026-08-14": {"mi": 4, "items": [{"tag": "Arrival", "name": "Shakeout", "det": "20\u201330 min easy, in daylight.", "vol": "4 mi"}]}, "2026-08-15": {"mi": 14, "hard": 1, "items": [{"tag": "Session", "name": "Threshold: 2 \u00d7 5 miles w/ 3 min", "det": "Biggest threshold of the block, two days off a long-haul. Move it.", "vol": "14 mi"}, {"tag": "Core", "name": "P90X Abs", "det": "", "vol": ""}]}, "2026-08-16": {"mi": 15, "items": [{"tag": "Double", "name": "Double", "det": "", "vol": "15 mi"}, {"tag": "Mobility", "name": "Runners Yoga w/ Esther", "det": "", "vol": ""}]}, "2026-08-17": {"mi": 18, "hard": 1, "items": [{"tag": "Session", "name": "Double Threshold: 2K / 1K", "det": "", "vol": "18 mi"}, {"tag": "Strength", "name": "Weight Room", "det": "35 min, quality over volume", "vol": ""}]}, "2026-08-18": {"mi": 10, "items": [{"tag": "Aerobic", "name": "Aerobic Run", "det": "", "vol": "10 mi"}, {"tag": "Core", "name": "Carrie Core", "det": "5 min \u00d72", "vol": ""}]}, "2026-08-19": {"mi": 15, "items": [{"tag": "Double", "name": "Double + Strides", "det": "", "vol": "15 mi"}]}, "2026-08-20": {"mi": 12, "hard": 1, "items": [{"tag": "Session", "name": "Tempo Run", "det": "8 mile tempo.", "vol": "12 mi"}, {"tag": "Strength", "name": "Weight Room", "det": "35 min, quality over volume", "vol": ""}]}, "2026-08-21": {"mi": 15, "items": [{"tag": "Double", "name": "Double", "det": "", "vol": "15 mi"}]}, "2026-08-22": {"mi": 16, "items": [{"tag": "Long", "name": "Long Run", "det": "", "vol": "16 mi"}, {"tag": "Core", "name": "Total Core / Abs", "det": "", "vol": ""}]}, "2026-08-23": {"mi": 0, "rest": 1, "items": [{"tag": "Rest", "name": "Rest Day", "det": "", "vol": ""}, {"tag": "Mobility", "name": "Runners Yoga w/ Esther", "det": "", "vol": ""}]}}</script>
+
+<nav role="tablist">
+  <button class="t-today" role="tab" data-v="today" aria-selected="true"><span class="ic">◎</span>Today</button>
+  <button class="t-sleep" role="tab" data-v="sleep" aria-selected="false"><span class="ic">☾</span>Sleep</button>
+  <button class="t-runs" role="tab" data-v="runs" aria-selected="false"><span class="ic">▲</span>Runs</button>
+  <button class="t-gym" role="tab" data-v="gym" aria-selected="false"><span class="ic">◼</span>Gym</button>
+</nav>
+
+<div class="wrap">
+  <div class="hd">
+    <div class="d" id="hdDate"></div>
+    <h1 id="hdTitle">Today</h1>
+    <div class="cd" id="hdCd"></div>
+    <button class="upd" id="updBtn">Update data</button>
+  </div>
+  <div id="panel" class="hide"></div>
+  <div id="v-today"></div>
+  <div id="v-sleep" class="hide"></div>
+  <div id="v-runs" class="hide"></div>
+  <div id="v-gym" class="hide"></div>
+  <div class="sync" id="sync"></div>
+</div>
+
+<script>
+const SNAP=JSON.parse(document.getElementById('snap').textContent);
+const SNAPPLAN=JSON.parse(document.getElementById('snapplan').textContent);
+let DATA=SNAP, PLAN=SNAPPLAN;
+const $=s=>document.querySelector(s);
+const D=s=>new Date(s+'T00:00:00');
+const kd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const NAT='2026-11-21', REG='2026-11-13';
+const dd=(a,b)=>Math.round((D(b)-D(a))/864e5);
+const num=(v,d=0)=>v==null||isNaN(v)?'–':(+v).toFixed(d);
+const hm=h=>h==null?'–':`${Math.floor(h)}h ${String(Math.round((h%1)*60)).padStart(2,'0')}m`;
+const clock=h=>h==null?'–':`${String(Math.floor(h)).padStart(2,'0')}:${String(Math.round((h%1)*60)).padStart(2,'0')}`;
+let TODAY=kd(new Date());
+
+/* ---------- shared bits ---------- */
+function ring(score,color,sub,size=104,stroke=9){
+  const r=(size-stroke)/2, c=2*Math.PI*r, pct=Math.max(0,Math.min(100,score||0));
+  return `<div class="ring" style="width:${size}px;height:${size}px">
+    <svg width="${size}" height="${size}" style="transform:rotate(-90deg)">
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--surf2)" stroke-width="${stroke}"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+        stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-pct/100)}"/>
+    </svg>
+    <div class="val"><span class="n">${score==null?'–':Math.round(score)}</span><span class="s">${sub}</span></div></div>`;
+}
+function bars(obj,color,labels){
+  return Object.entries(obj||{}).filter(([,v])=>v!=null).map(([k,v])=>
+    `<div class="cb"><div class="t"><span>${labels[k]||k.replace(/_/g,' ')}</span><span>${Math.round(v)}</span></div>
+     <div class="bar"><i style="width:${Math.max(2,Math.min(100,v))}%;background:${color}"></i></div></div>`).join('');
+}
+function trend(rows,field,color,h=110,band){
+  const v=rows.filter(r=>r[field]!=null);
+  if(v.length<2) return '<div class="note">Not enough data yet.</div>';
+  const W=600, mn=Math.min(...v.map(r=>r[field])), mx=Math.max(...v.map(r=>r[field])), rg=(mx-mn)||1;
+  const x=i=>i/(v.length-1)*(W-8)+4, y=z=>h-8-((z-mn)/rg)*(h-22);
+  const pts=v.map((r,i)=>[x(i),y(r[field])]);
+  let s='';
+  if(band!=null&&band>=mn&&band<=mx) s+=`<line x1="4" y1="${y(band)}" x2="${W-4}" y2="${y(band)}" stroke="${color}" stroke-dasharray="3 5" opacity=".35"/>`;
+  s+=`<polyline fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>p.join(',')).join(' ')}"/>`;
+  s+=`<circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="3.5" fill="${color}"/>`;
+  return `<svg class="ch" viewBox="0 0 ${W} ${h}" preserveAspectRatio="none" role="img" aria-label="${field} trend">${s}</svg>
+    <div class="chl"><span>${v[0].day.slice(5)}</span><span style="margin-left:auto">${v[v.length-1].day.slice(5)} · now ${num(v[v.length-1][field],1)}</span></div>`;
+}
+const nights=()=>DATA.daily.filter(r=>r.tst!=null);
+const lastNight=()=>nights().slice(-1)[0]||{};
+const runDays=()=>DATA.daily.filter(r=>r.km>0);
+
+/* ---------- TODAY ---------- */
+const DAYPLANS={
+ quality:[['06:00','Wake. 500 ml water with a pinch of salt, daylight on your eyes inside ten minutes.',0],
+  ['06:20','60–80 g carbohydrate that sits easily — toast and honey, banana, sports drink.',1],
+  ['07:00','Session. At altitude judge it on heart rate, not pace.',1],
+  ['08:30','Inside 45 minutes: 25–30 g protein plus 80–100 g carbohydrate. This is the meal that matters most today.',1],
+  ['12:30','Full lunch, carbohydrate-forward, salt with it. Iron-rich protein two or three times a week.',0],
+  ['13:30','Twenty to thirty minutes flat, eyes shut.',1],
+  ['15:30','Snack, 40–60 g carbohydrate, about ninety minutes before the second run.',0],
+  ['17:00','Second run or the second threshold block.',1],
+  ['19:00','Dinner. Biggest carbohydrate serve of the day, protein again.',0],
+  ['21:30','Screens down, room cold and dark.',0],
+  ['22:15','Lights out. Same time regardless of how today went.',1]],
+ long:[['06:15','Wake, fluids first.',0],
+  ['06:45','90–100 g carbohydrate. Never start anything over 100 minutes empty.',1],
+  ['07:45','Long run. 30–60 g carbohydrate an hour past the 75-minute mark.',1],
+  ['10:15','Refuel: 25–30 g protein, 100 g+ carbohydrate, fluid at roughly 1.5× what you lost.',1],
+  ['11:30','Legs up, twenty minutes.',0],
+  ['13:00','Lunch, unhurried and large.',0],
+  ['15:00','Mobility or yoga. Easy — not a second session.',0],
+  ['19:00','Dinner. Carbohydrate again; you are refilling for two days.',0],
+  ['21:45','Earlier than a weekday. This is the night the adaptation happens.',1]],
+ easy:[['06:30','Wake.',0],
+  ['07:00','Aerobic run. Heart rate drifting high at normal pace means shorten it, not push through.',1],
+  ['08:15','Breakfast, protein-forward. Iron with vitamin C, an hour clear of coffee and dairy.',0],
+  ['12:30','Lunch.',0],
+  ['16:30','Second run or core. Strides on the days they are written.',0],
+  ['19:00','Dinner.',0],
+  ['20:30','Sauna if it is a heat day — 20 minutes, three hours clear of bed.',0],
+  ['22:15','Lights out. Same time as every other night.',1]],
+ rest:[['07:30','Sleep in if your body wants it. This is the one day it is allowed.',1],
+  ['09:00','Breakfast, protein-forward. Do not under-eat on a rest day — you are still repairing.',1],
+  ['11:00','Twenty minutes walking or easy mobility. Movement, not training.',0],
+  ['13:00','Lunch as normal. Rest days are when the week actually lands.',0],
+  ['16:00','Yoga. Hips, calves, hamstrings.',0],
+  ['19:00','Dinner.',0],
+  ['21:00','Sauna if you use it. Nothing else.',0],
+  ['22:15','Lights out. Same time.',1]]};
+function dayType(p){
+  if(!p) return 'easy';
+  if(p.rest) return 'rest';
+  const n=(p.items[0]&&p.items[0].name||'').toLowerCase();
+  if(n.includes('long')) return 'long';
+  if(p.hard) return 'quality';
+  return 'easy';
+}
+function viewToday(){
+  const p=PLAN[TODAY], ln=lastNight(), t=dayType(p);
+  const lbl={quality:'Quality day',long:'Long run day',easy:'Easy day',rest:'Rest day'}[t];
+  const acwr=DATA.daily.filter(r=>r.day<=TODAY&&r.acwr!=null).slice(-1)[0];
+  const load=acwr?acwr.acwr:null;
+  let verdict;
+  if(ln.readiness==null) verdict='No ring data for last night, so today is on feel. Warm up and judge the first ten minutes honestly.';
+  else if(ln.readiness>=85) verdict='Green light. Take the session as written.';
+  else if(ln.readiness>=70) verdict='Normal. Run the session, but let heart rate govern the effort rather than pace.';
+  else verdict='Low. Do the session at the easy end of the range, or move it a day. Nothing is won by forcing this one.';
+  $('#v-today').innerHTML=`
+  <div class="card"><div class="ringbox">
+    ${ring(ln.readiness,'var(--ready)','ready')}
+    <div class="meta"><div class="big">${lbl}</div>
+      <div class="lab">${p?p.items.map(i=>i.name).join(' · '):'Nothing scheduled'}</div>
+      <div class="note">${verdict}</div></div></div></div>
+
+  <div class="row r3">
+    <div class="stat"><div class="k">Slept</div><div class="v">${ln.tst!=null?hm(ln.tst):'–'}</div>
+      <div class="sub">${ln.eff!=null?ln.eff+'% efficient':'no data'}</div></div>
+    <div class="stat"><div class="k">HRV</div><div class="v">${num(ln.hrv)}<span class="u">ms</span></div>
+      <div class="sub">${DATA.stats.hrv_mean?'avg '+DATA.stats.hrv_mean:''}</div></div>
+    <div class="stat"><div class="k">Load ratio</div><div class="v">${load!=null?load.toFixed(2):'–'}</div>
+      <div class="sub">${load==null?'':(load>1.5?'climbing fast':load<0.8?'easing':'in range')}</div></div>
+  </div>
+
+  <div class="card"><h2>Scheduled</h2>
+    ${p?p.items.map(i=>`<div class="sess ${/strength|core|mobility/i.test(i.tag)?'strength':''} ${p.rest?'rest':''}">
+      ${i.vol?`<span class="vol">${i.vol}</span>`:''}<div class="tag">${i.tag}</div>
+      <div class="nm">${i.name}</div>${i.det?`<div class="dt2">${i.det}</div>`:''}</div>`).join('')
+      :'<div class="note">No session on file for today. The plan runs to 23 August — add the next block to <b>plan.json</b>.</div>'}
+  </div>
+
+  <div class="card"><h2>Recovery and fuelling · ${lbl.toLowerCase()}</h2>
+    <div class="tl">${DAYPLANS[t].map(r=>`<div class="tli ${r[2]?'key':''}"><div class="tm">${r[0]}</div><div class="tx">${r[1]}</div></div>`).join('')}</div>
+  </div>`;
+}
+
+/* ---------- SLEEP ---------- */
+function viewSleep(){
+  const ns=nights(), ln=lastNight(), st=DATA.stats;
+  const c=(DATA.sleep_contrib||{})[ln.day];
+  const stages=[['Deep',ln.deep,'var(--sleep)'],['REM',ln.rem,'#8FA9F0'],['Light',ln.light,'#3E5877'],['Awake',ln.awake,'#2A3244']];
+  const tot=stages.reduce((a,b)=>a+(b[1]||0),0)||1;
+  const last30=ns.slice(-30);
+  const beds=ns.filter(r=>r.bed!=null).map(r=>r.bed>18?r.bed-24:r.bed);
+  const bsd=beds.length>1?(()=>{const m=beds.reduce((a,b)=>a+b,0)/beds.length;
+    return Math.sqrt(beds.reduce((a,b)=>a+(b-m)**2,0)/(beds.length-1))})():null;
+  $('#v-sleep').innerHTML=`
+  <div class="card"><div class="ringbox">
+    ${ring(ln.sleep_score,'var(--sleep)','sleep')}
+    <div class="meta"><div class="big">${hm(ln.tst)}</div>
+      <div class="lab">${ln.day?D(ln.day).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'}):''}</div>
+      <div class="note">In bed ${hm(ln.tib)} · asleep ${hm(ln.tst)} · awake ${ln.awake!=null?Math.round(ln.awake*60)+' min':'–'}</div></div></div>
+    <div class="stages" style="margin-top:18px">
+      ${stages.map(s=>`<div style="width:${((s[1]||0)/tot)*100}%;background:${s[2]}">${(s[1]||0)/tot>0.12?s[0]:''}</div>`).join('')}
+    </div>
+    <div class="slegend">${stages.map(s=>`<span><i style="background:${s[2]}"></i>${s[0]} ${hm(s[1])}</span>`).join('')}</div>
+  </div>
+
+  <div class="row r3">
+    <div class="stat"><div class="k">HRV</div><div class="v">${num(ln.hrv)}<span class="u">ms</span></div><div class="sub">avg ${num(st.hrv_mean)}</div></div>
+    <div class="stat"><div class="k">Resting HR</div><div class="v">${num(ln.rhr)}<span class="u">bpm</span></div><div class="sub">avg ${num(st.rhr_mean,1)}</div></div>
+    <div class="stat"><div class="k">Efficiency</div><div class="v">${num(ln.eff)}<span class="u">%</span></div>
+      <div class="sub">${ln.eff!=null?(ln.eff>=88?'good':'target 88%'):''}</div>
+      <div class="bar-mini"><i style="width:${Math.min(100,(ln.eff||0))}%;background:${(ln.eff||0)>=88?'var(--gym)':'var(--warn)'}"></i></div></div>
+    <div class="stat"><div class="k">Latency</div><div class="v">${num(ln.lat)}<span class="u">min</span></div><div class="sub">time to fall asleep</div></div>
+    <div class="stat"><div class="k">Restless</div><div class="v">${num(ln.restless)}</div><div class="sub">periods</div></div>
+    <div class="stat"><div class="k">Breathing</div><div class="v">${num(ln.br,1)}<span class="u">/min</span></div><div class="sub">average</div></div>
+  </div>
+
+  ${c?`<div class="card"><h2>What made the score</h2>${bars(c,'var(--sleep)',{deep_sleep:'Deep sleep',rem_sleep:'REM sleep',total_sleep:'Total sleep',efficiency:'Efficiency',restfulness:'Restfulness',latency:'Latency',timing:'Timing'})}</div>`:''}
+
+  <div class="card"><h2>Sleep, last 30 nights</h2>
+    ${trend(last30,'tst','var(--sleep)',110,8)}
+    <div class="note" style="margin-top:14px">Average <b>${hm(st.sleep_mean)}</b> across ${st.nights} nights. The dotted line is 8 hours.</div>
+  </div>
+
+  <div class="row r2">
+    <div class="card"><h2>HRV trend</h2>${trend(ns.slice(-40),'hrv','var(--ready)',100)}</div>
+    <div class="card"><h2>Resting heart rate</h2>${trend(ns.slice(-40),'rhr','var(--warn)',100)}</div>
+  </div>
+
+  <div class="card"><h2>Consistency</h2>
+    <div class="row r2">
+      <div class="stat"><div class="k">Average lights out</div><div class="v">${clock(st.bed_mean)}</div>
+        <div class="sub">swing ±${bsd?Math.round(bsd*60):'–'} min</div></div>
+      <div class="stat"><div class="k">Average wake</div><div class="v">${clock(st.wake_mean)}</div>
+        <div class="sub">anchor this one first</div></div>
+    </div>
+    <div class="note" style="margin-top:14px">You spend around <b>${st.awake_mean} minutes</b> awake in bed a night at <b>${st.eff_mean}% efficiency</b>. The time is already bought — it is fragmentation, not an earlier bedtime, that costs you.</div>
+  </div>`;
+}
+
+/* ---------- RUNS ---------- */
+function viewRuns(){
+  const wks=DATA.weeks.filter(w=>w.mi>0).slice(-8);
+  const cw=wks[wks.length-1]||{mi:0,km:0,runs:0};
+  const target=DATA.planned[cw.start]||null;
+  const acts=(DATA.activities||[]).slice(0,25);
+  const rd=runDays(), last=rd.slice(-1)[0]||{};
+  const acwr=DATA.daily.filter(r=>r.acwr!=null).slice(-1)[0];
+  const mx=Math.max(...wks.map(w=>Math.max(w.mi,DATA.planned[w.start]||0)),1);
+  const totalMi=DATA.weeks.reduce((a,w)=>a+w.mi,0);
+  $('#v-runs').innerHTML=`
+  <div class="card"><div class="ringbox">
+    ${ring(target?Math.min(100,cw.mi/target*100):Math.min(100,cw.mi),'var(--run)',target?'of plan':'miles')}
+    <div class="meta"><div class="big">${num(cw.mi,1)} mi</div>
+      <div class="lab">week of ${cw.start?D(cw.start).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):''}${target?` · ${target} planned`:''}</div>
+      <div class="note">${cw.runs} runs · ${num(cw.km,1)} km${acwr?` · load ratio ${acwr.acwr}`:''}</div></div></div></div>
+
+  <div class="row r3">
+    <div class="stat"><div class="k">Total logged</div><div class="v">${num(totalMi)}<span class="u">mi</span></div><div class="sub">${DATA.stats.runs} runs</div></div>
+    <div class="stat"><div class="k">Last run HR</div><div class="v">${num(last.hr)}<span class="u">bpm</span></div><div class="sub">${last.day||''}</div></div>
+    <div class="stat"><div class="k">Elevation</div><div class="v">${num(last.elev)}<span class="u">m</span></div><div class="sub">${(last.elev||0)>1000?'altitude':'sea level'}</div></div>
+  </div>
+
+  <div class="card"><h2>Weekly volume</h2>
+    <svg class="ch" viewBox="0 0 600 190" role="img" aria-label="Weekly mileage">
+      ${wks.map((w,i)=>{const bw=600/wks.length, x=i*bw, pl=DATA.planned[w.start]||0;
+        const h=(w.mi/mx)*130, ph=(pl/mx)*130;
+        return (pl?`<rect x="${x+bw*.18}" y="${150-ph}" width="${bw*.64}" height="${ph}" rx="3" fill="#242C3D"/>`:'')+
+          `<rect x="${x+bw*.28}" y="${150-h}" width="${bw*.44}" height="${h}" rx="3" fill="var(--run)"/>
+           <text x="${x+bw/2}" y="${145-h}" text-anchor="middle" font-family="DM Mono" font-size="11" fill="#EDF0F6">${Math.round(w.mi)}</text>
+           <text x="${x+bw/2}" y="${170}" text-anchor="middle" font-family="DM Mono" font-size="10" fill="#5D677D">${D(w.start).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</text>`}).join('')}
+    </svg>
+    <div class="chl"><span><i style="background:var(--run)"></i>logged</span><span><i style="background:#242C3D"></i>planned</span></div>
+  </div>
+
+  <div class="card"><h2>Recent runs</h2>
+    ${acts.length?acts.map(a=>{
+      const hard=a.hr&&a.hr>=150;
+      return `<div class="li">
+        <div class="dt"><div class="dd">${a.day.slice(8)}</div><div class="mo">${D(a.day).toLocaleDateString('en-GB',{month:'short'})}</div></div>
+        <div class="mid"><div class="n">${a.loc}${hard?'<span class="pill" style="background:var(--warn);color:#0A0D14">hard</span>':''}</div>
+          <div class="s">${a.t} · ${a.pace}/km${a.hr?` · ${a.hr} bpm`:''}${a.asc?` · ${a.asc} m up`:''}</div></div>
+        <div class="rt"><div class="a">${a.km} km</div><div class="b">${Math.floor(a.sec/60)}:${String(a.sec%60).padStart(2,'0')}</div></div>
+      </div>`}).join(''):'<div class="note">No activities loaded.</div>'}
+  </div>`;
+}
+
+/* ---------- GYM ---------- */
+function viewGym(){
+  const wk=[]; for(let i=0;i<7;i++){const d=new Date(D(TODAY).getTime()+i*864e5); wk.push([kd(d),d]);}
+  const strength=[];
+  wk.forEach(([k,d])=>{const p=PLAN[k]; if(!p)return;
+    p.items.forEach(it=>{ if(/strength|core|mobility|rest/i.test(it.tag)&&it.name!=='Rest Day')
+      strength.push({k,d,tag:it.tag,name:it.name,det:it.det});});});
+  const ns=nights(), ln=lastNight();
+  const rc=(DATA.ready_contrib||{})[ln.day];
+  $('#v-gym').innerHTML=`
+  <div class="card"><div class="ringbox">
+    ${ring(strength.length/7*100,'var(--gym)',`${strength.length}×`)}
+    <div class="meta"><div class="big">${strength.length} sessions</div>
+      <div class="lab">strength and mobility, next seven days</div>
+      <div class="note">Lifting exists to keep you durable through a 100-mile week, not to add fatigue. Thirty-five minutes, heavy-ish, always after the run — never before.</div></div></div></div>
+
+  <div class="card"><h2>This week</h2>
+    ${strength.length?strength.map(s=>`<div class="li">
+      <div class="dt"><div class="dd">${s.k.slice(8)}</div><div class="mo">${s.d.toLocaleDateString('en-GB',{weekday:'short'})}</div></div>
+      <div class="mid"><div class="n">${s.name}</div><div class="s">${s.tag}${s.det?' · '+s.det:''}</div></div>
+    </div>`).join(''):'<div class="note">Nothing scheduled in the plan for the next seven days.</div>'}
+  </div>
+
+  <div class="card"><h2>How to place it</h2>
+    <div class="tl">
+      <div class="tli key"><div class="tm">Same day as quality</div><div class="tx">Weight room follows the hard run, ideally within a couple of hours. Two hard stimuli on one day leaves the easy days genuinely easy.</div></div>
+      <div class="tli"><div class="tm">Never before a session</div><div class="tx">Lifting first compromises the run that actually decides your fitness. The run is the session; the gym supports it.</div></div>
+      <div class="tli key"><div class="tm">35 minutes, not 70</div><div class="tx">Heavy and short beats long and fatiguing. Low reps, full recovery between sets, stop while it still feels good.</div></div>
+      <div class="tli"><div class="tm">Core on easy days</div><div class="tx">The 15-minute core work sits fine on aerobic days. It is not a session and should not feel like one.</div></div>
+      <div class="tli"><div class="tm">Drop volume in November</div><div class="tx">From the start of the sharpening block, keep lifting but cut it roughly in half. Maintain the strength, shed the fatigue.</div></div>
+    </div>
+  </div>
+
+  <div class="card"><h2>Recovery protocol</h2>
+    <div class="tl">
+      <div class="tli key"><div class="tm">Sauna</div><div class="tx">20 minutes after an easy run, three or four times a week, and at least three hours clear of bedtime. Rehydrate afterwards with salt, not just water. Skip it entirely on double-threshold days — you do not need more heat load on top of two sessions.</div></div>
+      <div class="tli"><div class="tm">Yoga and mobility</div><div class="tx">The weekend yoga is the one that matters. Hips, calves, hamstrings. Keep it easy enough that it is recovery rather than a third session.</div></div>
+      <div class="tli key"><div class="tm">The nap</div><div class="tx">Twenty to thirty minutes on double days. Given your nights average ${hm(DATA.stats.sleep_mean)}, this is the cheapest way to close the gap without moving your bedtime.</div></div>
+      <div class="tli"><div class="tm">Iron</div><div class="tx">Distance runners at altitude burn through it. Iron-rich protein two or three times a week, taken with vitamin C and an hour clear of coffee and dairy. Worth a blood panel through your team before September.</div></div>
+    </div>
+  </div>
+
+  ${rc?`<div class="card"><h2>What is driving recovery</h2>${bars(rc,'var(--gym)',{activity_balance:'Activity balance',body_temperature:'Body temperature',hrv_balance:'HRV balance',previous_day_activity:"Yesterday's activity",previous_night:'Previous night',recovery_index:'Recovery index',resting_heart_rate:'Resting heart rate',sleep_balance:'Sleep balance',sleep_regularity:'Sleep regularity'})}</div>`:''}`;
+}
+
+/* ---------- shell ---------- */
+const VIEWS={today:viewToday,sleep:viewSleep,runs:viewRuns,gym:viewGym};
+const TITLES={today:'Today',sleep:'Sleep',runs:'Runs',gym:'Gym and recovery'};
+let view='today';
+function show(v){
+  view=v;
+  document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));
+  ['today','sleep','runs','gym'].forEach(k=>$('#v-'+k).classList.toggle('hide',k!==v));
+  $('#hdTitle').textContent=TITLES[v];
+  VIEWS[v]();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+function render(){
+  $('#hdDate').textContent=D(TODAY).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  const n=dd(TODAY,NAT), r=dd(TODAY,REG);
+  $('#hdCd').innerHTML=n>0?`<b>${n}</b> days to Terre Haute · ${r>0?r+' to regionals':'regionals done'}`:'Season complete.';
+  Object.values(VIEWS).forEach(f=>f());
+  show(view);
+}
+document.querySelector('nav').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(b){ show(b.dataset.v); }});
+document.getElementById('updBtn').addEventListener('click',()=>openPanel());
+
+
+/* ---------- importing your own exports ---------- */
+function splitCSV(text,sep){
+  const rows=[];let f='',row=[],q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){f+='"';i++;} else q=false; } else f+=c; }
+    else if(c==='"') q=true;
+    else if(c===sep){row.push(f);f='';}
+    else if(c==='\n'){row.push(f);rows.push(row);row=[];f='';}
+    else if(c!=='\r') f+=c;}
+  if(f||row.length){row.push(f);rows.push(row);}
+  return rows;
+}
+function guessSep(text){
+  const l=text.slice(0,text.indexOf('\n'));
+  return l.split(';').length>l.split(',').length?';':',';
+}
+function upsert(day,patch){
+  let r=DATA.daily.find(x=>x.day===day);
+  if(!r){r={day,km:0,mi:0,runs:0};DATA.daily.push(r);}
+  Object.assign(r,patch); return r;
+}
+const secs=v=>{const n=parseFloat(v);return isNaN(n)?null:n;};
+
+function importCSV(text,name){
+  const sep=guessSep(text), rows=splitCSV(text,sep);
+  if(rows.length<2) return {ok:false,msg:name+' — empty'};
+  const h=rows[0].map(x=>x.trim()), col=n=>h.indexOf(n);
+  const body=rows.slice(1).filter(r=>r.length>1);
+
+  if(col('Date')>=0&&col('Distance')>=0){                       // Garmin activities
+    const iD=col('Date'),iX=col('Distance'),iT=col('Time'),iH=col('Avg HR'),
+          iM=col('Max HR'),iA=col('Total Ascent'),iE=col('Min Elevation'),iN=col('Title');
+    const by={},acts=[];
+    body.forEach(r=>{
+      if(!r[iD])return;
+      const day=r[iD].slice(0,10), km=parseFloat(String(r[iX]).replace(/,/g,''))||0;
+      const parts=String(r[iT]).split(':');
+      const sec=parts.length===3?Math.round(+parts[0]*3600+ +parts[1]*60+ parseFloat(parts[2])):0;
+      const hr=parseFloat(r[iH])||null;
+      by[day]=by[day]||{km:0,runs:0,sec:0,hrs:[],elev:null,loc:null};
+      by[day].km+=km; by[day].runs++; by[day].sec+=sec; if(hr)by[day].hrs.push(hr);
+      const num2=v=>{const n=parseFloat(String(v).replace(/,/g,''));return isNaN(n)?null:Math.round(n)};
+      if(by[day].elev==null)by[day].elev=num2(r[iE]);
+      if(!by[day].loc)by[day].loc=String(r[iN]||'').replace(' Running','');
+      if(km>0&&sec>0){const pc=sec/km;
+        acts.push({day,t:String(r[iD]).slice(11,16),km:Math.round(km*100)/100,
+          mi:Math.round(km*62.1371)/100,sec,
+          pace:Math.floor(pc/60)+':'+String(Math.round(pc%60)).padStart(2,'0'),
+          hr,maxhr:parseFloat(r[iM])||null,asc:num2(r[iA]),elev:num2(r[iE]),
+          loc:String(r[iN]||'Run').replace(' Running','')});}
+    });
+    Object.entries(by).forEach(([day,v])=>upsert(day,{
+      km:Math.round(v.km*10)/10, mi:Math.round(v.km*6.21371)/10, runs:v.runs,
+      min:Math.round(v.sec/60), elev:v.elev, loc:v.loc,
+      hr:v.hrs.length?Math.round(v.hrs.reduce((a,b)=>a+b,0)/v.hrs.length):null}));
+    acts.sort((a,b)=>(a.day+a.t)<(b.day+b.t)?1:-1);
+    DATA.activities=acts;
+    return {ok:true,msg:`Garmin — ${acts.length} runs across ${Object.keys(by).length} days`};
+  }
+
+  if(col('day')>=0&&col('average_hrv')>=0){                     // Oura sleepmodel
+    const g=n=>col(n), iD=g('day');let n=0;
+    body.forEach(r=>{
+      const tst=secs(r[g('total_sleep_duration')]);
+      if(!tst||tst<3*3600)return;
+      n++;
+      const hh=v=>{const t=String(v).slice(11,16);
+        return t.length===5?Math.round((+t.slice(0,2)+ +t.slice(3)/60)*100)/100:null;};
+      const lat=secs(r[g('latency')]);
+      upsert(String(r[iD]).slice(0,10),{
+        tst:Math.round(tst/36)/100,
+        awake:Math.round((secs(r[g('awake_time')])||0)/36)/100,
+        deep:Math.round((secs(r[g('deep_sleep_duration')])||0)/36)/100,
+        rem:Math.round((secs(r[g('rem_sleep_duration')])||0)/36)/100,
+        light:Math.round((secs(r[g('light_sleep_duration')])||0)/36)/100,
+        tib:Math.round((secs(r[g('time_in_bed')])||0)/36)/100,
+        eff:secs(r[g('efficiency')]), hrv:secs(r[g('average_hrv')]),
+        rhr:secs(r[g('lowest_heart_rate')]),
+        lat:lat?Math.round(lat/60):null,
+        restless:secs(r[g('restless_periods')]),
+        br:secs(r[g('average_breath')]),
+        bed:hh(r[g('bedtime_start')]), wake:hh(r[g('bedtime_end')])});
+    });
+    return {ok:true,msg:`Oura sleep detail — ${n} nights`};
+  }
+
+  if(col('day')>=0&&col('score')>=0){                           // daily sleep / readiness
+    const isRead=h.includes('temperature_deviation');
+    const iD=col('day'),iS=col('score'),iC=col('contributors');let n=0;
+    const store=isRead?(DATA.ready_contrib=DATA.ready_contrib||{}):(DATA.sleep_contrib=DATA.sleep_contrib||{});
+    body.forEach(r=>{
+      const day=String(r[iD]).slice(0,10); if(!day)return; n++;
+      upsert(day,isRead?{readiness:parseFloat(r[iS])||null}:{sleep_score:parseFloat(r[iS])||null});
+      if(iC>=0&&r[iC]){ try{ store[day]=JSON.parse(r[iC]); }catch(e){} }
+    });
+    return {ok:true,msg:`Oura ${isRead?'readiness':'sleep scores'} — ${n} days`};
+  }
+  return {ok:false,msg:name+' — not a file this app reads'};
+}
+
+/* minimal ZIP reader so the Oura export can be dropped in unopened */
+async function unzip(buf){
+  const dv=new DataView(buf), u8=new Uint8Array(buf);
+  let eocd=-1;
+  for(let i=u8.length-22;i>=Math.max(0,u8.length-66000);i--){
+    if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;}
+  }
+  if(eocd<0) throw new Error('not a zip file');
+  const count=dv.getUint16(eocd+10,true);
+  let off=dv.getUint32(eocd+16,true);
+  const files=[];
+  for(let i=0;i<count;i++){
+    if(dv.getUint32(off,true)!==0x02014b50) break;
+    const method=dv.getUint16(off+10,true);
+    const csize=dv.getUint32(off+20,true);
+    const nlen=dv.getUint16(off+28,true), elen=dv.getUint16(off+30,true), clen=dv.getUint16(off+32,true);
+    const lho=dv.getUint32(off+42,true);
+    const name=new TextDecoder().decode(u8.subarray(off+46,off+46+nlen));
+    files.push({name,method,csize,lho});
+    off+=46+nlen+elen+clen;
+  }
+  const out={};
+  for(const f of files){
+    if(!/\.csv$/i.test(f.name)||f.csize===0) continue;
+    const ln=dv.getUint16(f.lho+26,true), le=dv.getUint16(f.lho+28,true);
+    const start=f.lho+30+ln+le;
+    const raw=u8.subarray(start,start+f.csize);
+    let bytes;
+    if(f.method===0) bytes=raw;
+    else if(f.method===8){
+      if(typeof DecompressionStream!=='function') throw new Error('this browser cannot open zips — unzip it first');
+      const ds=new DecompressionStream('deflate-raw');
+      const stream=new Blob([raw]).stream().pipeThrough(ds);
+      bytes=new Uint8Array(await new Response(stream).arrayBuffer());
+    } else continue;
+    out[f.name.split('/').pop()]=new TextDecoder().decode(bytes);
+  }
+  return out;
+}
+
+function recompute(){
+  DATA.daily.sort((a,b)=>a.day<b.day?-1:1);
+  const kms=DATA.daily.map(r=>r.km||0);
+  DATA.daily.forEach((r,i)=>{
+    const a=kms.slice(Math.max(0,i-6),i+1), c=kms.slice(Math.max(0,i-27),i+1);
+    const atl=a.reduce((x,y)=>x+y,0)/a.length, ctl=c.reduce((x,y)=>x+y,0)/c.length;
+    r.atl=Math.round(atl*10)/10; r.ctl=Math.round(ctl*10)/10;
+    r.acwr=ctl?Math.round(atl/ctl*100)/100:null;});
+  const m={};
+  DATA.daily.forEach(r=>{const d=D(r.day),off=(d.getDay()+6)%7,k=kd(new Date(d.getTime()-off*864e5));
+    m[k]=m[k]||{start:k,km:0,mi:0,runs:0};
+    m[k].km+=r.km||0; m[k].mi+=r.mi||0; m[k].runs+=r.runs||0;});
+  DATA.weeks=Object.values(m).sort((a,b)=>a.start<b.start?-1:1)
+    .map(w=>({...w,km:Math.round(w.km*10)/10,mi:Math.round(w.mi*10)/10}));
+  const mean=f=>{const v=DATA.daily.filter(r=>r[f]!=null).map(r=>r[f]);
+    return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;};
+  const lastOf=f=>{const v=DATA.daily.filter(r=>r[f]);return v.length?v[v.length-1].day:null;};
+  const beds=DATA.daily.filter(r=>r.bed!=null).map(r=>r.bed>18?r.bed-24:r.bed);
+  const bm=beds.length?beds.reduce((a,b)=>a+b,0)/beds.length:null;
+  const st=DATA.stats;
+  st.nights=DATA.daily.filter(r=>r.tst!=null).length;
+  st.runs=(DATA.activities||[]).length||DATA.daily.reduce((a,r)=>a+(r.runs||0),0);
+  st.total_km=Math.round(kms.reduce((a,b)=>a+b,0));
+  st.sleep_mean=mean('tst')?Math.round(mean('tst')*100)/100:null;
+  st.awake_mean=mean('awake')?Math.round(mean('awake')*60):null;
+  st.eff_mean=mean('eff')?Math.round(mean('eff')):null;
+  st.hrv_mean=mean('hrv')?Math.round(mean('hrv')):null;
+  st.rhr_mean=mean('rhr')?Math.round(mean('rhr')*10)/10:null;
+  st.wake_mean=mean('wake')?Math.round(mean('wake')*100)/100:null;
+  st.bed_mean=bm!=null?Math.round((bm+24)*100)/100:null;
+  if(beds.length>1){const v=beds.reduce((a,b)=>a+(b-bm)**2,0)/(beds.length-1);
+    st.bed_sd=Math.round(Math.sqrt(v)*100)/100;}
+  st.oura_last=lastOf('tst'); st.garmin_last=lastOf('runs');
+}
+
+const log=[];
+function say(html){ log.push(html); const el=$('#log'); if(el) el.innerHTML=log.slice(-8).join('<br>'); }
+async function handleFiles(list){
+  for(const f of list){
+    try{
+      if(/\.zip$/i.test(f.name)){
+        say(`Opening ${f.name}…`);
+        const files=await unzip(await f.arrayBuffer());
+        const want=['sleepmodel.csv','dailysleep.csv','dailyreadiness.csv','Activities.csv'];
+        let hit=0;
+        for(const n of want){ if(files[n]){ const r=importCSV(files[n],n); hit++;
+          say(`<span class="${r.ok?'ok':'no'}">${r.ok?'✓':'✗'}</span> ${r.msg}`);}}
+        if(!hit) say(`<span class="no">✗</span> ${f.name} — no readable CSVs inside`);
+      } else {
+        const r=importCSV(await f.text(),f.name);
+        say(`<span class="${r.ok?'ok':'no'}">${r.ok?'✓':'✗'}</span> ${r.msg}`);
+      }
+    }catch(e){ say(`<span class="no">✗</span> ${f.name} — ${e.message}`); }
+  }
+  recompute(); render(); openPanel(true);
+  const sb=$('#saveBtn'); if(sb) sb.disabled=false;
+}
+
+function saveCopy(){
+  document.getElementById('snap').textContent=JSON.stringify(DATA);
+  document.getElementById('snapplan').textContent=JSON.stringify(PLAN);
+  const html='<!doctype html>'+document.documentElement.outerHTML;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  a.download=`splitsheet-${TODAY}.html`;
+  a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+
+let panelOpen=false;
+function openPanel(force){
+  panelOpen=force!=null?force:!panelOpen;
+  const el=$('#panel'); el.classList.toggle('hide',!panelOpen);
+  if(!panelOpen) return;
+  el.innerHTML=`<div class="card"><h2>Update your data</h2>
+    <div class="dz" id="dz">
+      <div class="big2">Drop your export files here</div>
+      <div class="sm">or <label for="fi">choose files</label> — the Oura zip works as-is</div>
+      <input type="file" id="fi" multiple accept=".csv,.zip">
+    </div>
+    <div class="log" id="log">${log.slice(-8).join('<br>')||'Nothing loaded yet.'}</div>
+    <button class="savebtn" id="saveBtn" ${log.length?'':'disabled'}>Save this as my app</button>
+    <div class="sm" style="color:var(--dim);font-size:11.5px;margin-top:9px;text-align:center">
+      Saving downloads a copy with your latest data inside. Open that file next time.</div>
+  </div>
+  <div class="card"><h2>Where to get the files</h2>
+    <ol class="steps">
+      <li><b>Garmin</b> — connect.garmin.com → Activities → All Activities → the export icon top right. You get <b>Activities.csv</b>.</li>
+      <li><b>Oura</b> — cloud.ouraring.com → Account → Export Data. They email you a zip. Drop the whole zip in, unopened.</li>
+      <li>Everything is read inside this page. Nothing is uploaded anywhere.</li>
+    </ol></div>`;
+  $('#fi').addEventListener('change',e=>handleFiles([...e.target.files]));
+  $('#saveBtn').addEventListener('click',saveCopy);
+  const dz=$('#dz');
+  ['dragenter','dragover'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.add('over');}));
+  ['dragleave','drop'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.remove('over');}));
+  dz.addEventListener('drop',e=>handleFiles([...e.dataTransfer.files]));
+}
+
+async function boot(){
+  let live=false;
+  try{
+    const [d,p]=await Promise.all([
+      fetch('/api/data').then(r=>r.ok?r.json():Promise.reject()),
+      fetch('/api/plan').then(r=>r.ok?r.json():{}).catch(()=>({}))]);
+    DATA=d; PLAN=p&&Object.keys(p).length?p:SNAPPLAN; live=true;
+  }catch(e){ /* opened as a plain file — use the snapshot */ }
+  render();
+  if(live){
+    let s={};
+    try{ s=await (await fetch('/api/status')).json(); }catch(e){}
+    const chip=(on,name,href)=>on
+      ? `<span style="color:var(--gym)">●</span> ${name}`
+      : `<a href="${href}" style="color:var(--sleep);text-decoration:none">Connect ${name}</a>`;
+    $('#sync').innerHTML=`
+      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;align-items:center">
+        ${chip(s.oura,'Oura','/connect/oura')}
+        ${chip(s.strava,'Strava','/connect/strava')}
+        ${s.last?`<span>synced ${s.last} UTC</span>`:''}
+        <button id="sb">Sync now</button>
+      </div>`;
+    const b=$('#sb');
+    if(b) b.onclick=async()=>{
+      b.textContent='Syncing…'; b.disabled=true;
+      try{
+        const r=await (await fetch('/api/sync')).json();
+        if(r.ok){ DATA=await (await fetch('/api/data')).json(); render(); b.textContent='Synced'; }
+        else { b.textContent='Failed'; alert(`Strava: ${r.strava||'—'}\nOura: ${r.oura||'—'}`); }
+      }catch(e){ b.textContent='Failed'; }
+      setTimeout(()=>{b.disabled=false;b.textContent='Sync now';},2500);
+    };
+  } else {
+    $('#sync').innerHTML=`Data to ${DATA.stats.garmin_last} · ${DATA.stats.nights} nights, ${DATA.stats.runs} runs`;
+  }
+}
+boot();
+</script>

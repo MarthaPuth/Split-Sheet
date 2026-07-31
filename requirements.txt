@@ -1,2 +1,0 @@
-# Postgres, so your logins survive a restart. Everything else is standard library.
-psycopg[binary]>=3.2

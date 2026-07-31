@@ -110,13 +110,25 @@ def clear_history():
     store.drop(HISTORY_KEY)
 
 
-def reply(user_message, api_key, data, plan):
+VIEW_HINT = {
+    "today": "the Today screen — today's session, readiness and fuelling",
+    "sleep": "the Sleep screen — last night's stages, HRV, efficiency and trends",
+    "runs": "the Runs screen — weekly volume, load ratio and individual runs",
+    "gym": "the Gym screen — strength work, sauna, naps and recovery",
+    "cal": "the Calendar — the month and week of training, past and upcoming",
+}
+
+
+def reply(user_message, api_key, data, plan, view=""):
     if not api_key:
         raise RuntimeError(
             "ANTHROPIC_API_KEY is not set. Add it in your host's environment settings.")
 
     today = dt.date.today().isoformat()
     context = build_context(data, plan, today)
+    hint = VIEW_HINT.get(view)
+    if hint:
+        context += f"\n\nThe athlete is currently looking at {hint}, so a question with no other \ncontext is most likely about that."
     system = SYSTEM_TEMPLATE.format(context=context)
 
     past = history()[-MAX_TURNS:]

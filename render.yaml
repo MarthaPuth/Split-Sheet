@@ -25,3 +25,5 @@ services:
         sync: false
       - key: STRAVA_CLIENT_SECRET
         sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false

@@ -90,6 +90,27 @@ Last night's sleep is now there by morning. No export request, no waiting.
 
 ---
 
+## Step 6 — Connect the Coach (optional)
+
+A chat tab that reads your actual numbers — today's session, last night's
+sleep, HRV, load ratio — and gives perspective on whether to trust the session
+as written, what to do about an ache, or what to eat today. It never edits the
+plan; it only advises. Skip this step and the rest of the app works exactly
+the same, just without that tab active.
+
+1. Go to [console.anthropic.com](https://console.anthropic.com), sign up.
+2. Add a small amount of credit — a few dollars is plenty. This chat is cheap:
+   a typical exchange costs a fraction of a cent, so the whole season should
+   come to cents or a few dollars, not more. Check
+   [current pricing](https://docs.claude.com/en/docs/about-claude/pricing)
+   before relying on that number.
+3. Go to **API Keys** → **Create Key**. Copy it — it's shown once.
+4. In Render → **Environment**, add `ANTHROPIC_API_KEY` with that value. Save,
+   let it redeploy.
+5. Open your app. The Coach tab now has an input box instead of "not connected."
+
+---
+
 ## Living with it
 
 **Add it to your phone home screen.** Open the URL in Safari or Chrome, share
@@ -135,6 +156,13 @@ or Render hasn't finished redeploying. Environment changes take about a minute.
 **Strava connects but no runs** — check the callback domain is the bare domain
 with no `https://`. That one catches almost everyone.
 
+**Coach says "not connected"** — `ANTHROPIC_API_KEY` isn't set, or Render hasn't
+redeployed yet. It never breaks anything else; the other four tabs don't need it.
+
+**Coach replies with an error** — press it again, it's usually transient. If it
+keeps happening, the key itself is probably wrong or out of credit — check
+console.anthropic.com.
+
 **Everything looks empty after a while** — check the Neon project is still
 active. If the database is unreachable the app still runs but forgets its logins,
 and you'd reconnect both services.
@@ -148,9 +176,11 @@ failed and why.
 
 | Where | What |
 |---|---|
-| Neon | Your Oura and Strava tokens, and the merged dataset. |
+| Neon | Your Oura and Strava tokens, the merged dataset, and your Coach conversation. |
 | Render environment | Your client secrets and app password. Never in the code. |
 | The repo | Code and your training plan. No credentials — `.gitignore` covers it. |
 
 The app is password-protected and sends a no-referrer header so your URL doesn't
-leak. It never sends your data anywhere except back to your own browser.
+leak. It never sends your data anywhere except back to your own browser — and,
+for the Coach tab specifically, to Anthropic's API, the same as any other app
+built on it.
